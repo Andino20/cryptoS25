@@ -1,71 +1,88 @@
-use aes::cipher::BlockEncryptMut;
-use aes::{Aes128, cipher::KeyIvInit, cipher::block_padding::Pkcs7};
-use cbc::cipher::BlockDecryptMut;
+use aes::cipher::KeyIvInit;
+use cbc::cipher::BlockEncryptMut;
+use cbc::cipher::block_padding::Pkcs7;
 use image::GrayImage;
-use rand::Rng;
-use std::env;
-use std::process::exit;
+use std::fs::DirEntry;
+use std::time::*;
+mod encryption;
+#[derive(Default)]
+struct EncryptionStatistics {
+    duration: Duration,
+    entropy_before: f32,
+    entropy_after: f32,
+}
 
-type Aes128CbcEnc = cbc::Encryptor<Aes128>;
-type Aes128CbcDec = cbc::Decryptor<Aes128>;
+fn main() -> std::io::Result<()> {
+    let image_paths = std::fs::read_dir("./images")?;
+    let stats = image_paths
+        .filter_map(Result::ok)
+        .map(|entry| encrypt_image(&entry))
+        .collect::<Vec<EncryptionStatistics>>();
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        println!("Please specify a filename");
-        exit(1);
-    }
+    let average_entropy_before =
+        stats.iter().map(|stats| stats.entropy_before).sum::<f32>() / (stats.len() as f32);
+    let average_entropy_after =
+        stats.iter().map(|stats| stats.entropy_after).sum::<f32>() / (stats.len() as f32);
+    let average_time = stats
+        .iter()
+        .map(|stats| stats.duration)
+        .sum::<Duration>()
+        .as_micros() as f32
+        / (stats.len() as f32)
+        / 1000.0;
 
-    let img = image::open(&args[1])
-        .expect("Failed to open image")
-        .to_luma8();
-    img.save("out/img/gray.png").expect("Failed to save img");
+    println!("============================ STATS ============================");
+    println!("Average entropy (original):\t{}", average_entropy_before);
+    println!("Average entropy (encrypted):\t{}", average_entropy_after);
+    println!("Average encryption time:\t{} ms", average_time);
+    Ok(())
+}
 
-    let data = img.into_raw();
-    println!("Entropy of original image: {}", entropy(&data));
+fn encrypt_image(file: &DirEntry) -> EncryptionStatistics {
+    let filename = file.file_name();
+    let mut stats: EncryptionStatistics = Default::default();
 
-    assert_eq!(data.len() % 16, 0);
+    // Load image from memory as grayscale
+    let original = image::open(file.path()).unwrap().to_luma8();
+    original
+        .save(format!("./out/gray_{}", filename.to_str().unwrap()))
+        .expect("Could not save image in directory './out'");
+    stats.entropy_before = entropy(&original);
 
-    let key: [u8; 16] = [30; 16];
-    let iv = random_iv();
-    let cipher = Aes128CbcEnc::new(&key.into(), &iv.into());
+    let image_width = original.width();
+    let image_height = original.height();
+
+    // Initialize AES encryptor
+    let key = encryption::generate_aes128_key();
+    let iv = encryption::generate_aes128_iv();
+    let cipher = encryption::Aes128CbcEnc::new(&key.into(), &iv.into());
+
+    // Encrypt image data and time the process
+    let data = original.into_raw();
+    let start = Instant::now();
     let encrypted_data = cipher.encrypt_padded_vec_mut::<Pkcs7>(&data);
+    stats.duration = start.elapsed();
 
-    let encrypted_image = GrayImage::from_raw(1024, 1024, encrypted_data)
-        .expect("Failed to convert encrypted data into image.");
+    // Save encrypted image to output directory
+    let encrypted_image = GrayImage::from_raw(image_width, image_height, encrypted_data)
+        .expect("Failed to convert encrypted data into image!");
     encrypted_image
-        .save("out/img/enc.png")
-        .expect("Failed to save enc.png");
+        .save(format!("./out/encrypted_{}", filename.to_str().unwrap()))
+        .expect("Could not save encrypted image in directory './out'");
+    stats.entropy_after = entropy(&encrypted_image);
 
-    let data = encrypted_image.into_raw();
-    println!("Entropy of encrypted image: {}", entropy(&data));
-
-    let decryptor = Aes128CbcDec::new(&key.into(), &iv.into());
-    let decrypted_data = decryptor
-        .decrypt_padded_vec_mut::<Pkcs7>(&data)
-        .expect("Failed to decrypt data");
-
-    let decrypted_image = GrayImage::from_raw(1024, 1024, decrypted_data)
-        .expect("Failed to convert encrypted data into image.");
-    decrypted_image
-        .save("out/img/dec.png")
-        .expect("Failed to save enc.png");
+    stats
 }
 
-fn random_iv() -> [u8; 16] {
-    let mut iv = [0; 16];
-    rand::rng().fill(&mut iv);
-    iv
-}
-
-fn entropy(data: &[u8]) -> f32 {
+fn entropy(img: &GrayImage) -> f32 {
     let mut histogram: [u32; 256] = [0; 256];
-    for datum in data {
-        histogram[*datum as usize] += 1;
+    for value in img.as_raw() {
+        histogram[*value as usize] += 1;
     }
     histogram
         .iter()
-        .map(|x| *x as f32 / data.len() as f32)
+        .filter(|&&x| x > 0)
+        .map(|&x| x as f32 / (img.width() * img.height()) as f32)
         .map(|p| -p * p.log2())
         .sum::<f32>()
 }
