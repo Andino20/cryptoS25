@@ -43,14 +43,14 @@ fn encrypt_image(file: &DirEntry) -> EncryptionStatistics {
     let mut stats: EncryptionStatistics = Default::default();
 
     // Load image from memory as grayscale
-    let original = image::open(file.path()).unwrap().to_luma8();
-    original
+    let image = image::open(file.path()).unwrap().to_luma8();
+    image
         .save(format!("./out/gray_{}", filename.to_str().unwrap()))
         .expect("Could not save image in directory './out'");
-    stats.entropy_before = entropy(&original);
+    stats.entropy_before = entropy(&image);
 
-    let image_width = original.width();
-    let image_height = original.height();
+    let image_width = image.width();
+    let image_height = image.height();
 
     // Initialize AES encryptor
     let key = encryption::generate_aes128_key();
@@ -58,7 +58,7 @@ fn encrypt_image(file: &DirEntry) -> EncryptionStatistics {
     let cipher = encryption::Aes128CbcEnc::new(&key.into(), &iv.into());
 
     // Encrypt image data and time the process
-    let data = original.into_raw();
+    let data = image.into_raw();
     let start = Instant::now();
     let encrypted_data = cipher.encrypt_padded_vec_mut::<Pkcs7>(&data);
     stats.duration = start.elapsed();
@@ -70,6 +70,11 @@ fn encrypt_image(file: &DirEntry) -> EncryptionStatistics {
         .save(format!("./out/encrypted_{}", filename.to_str().unwrap()))
         .expect("Could not save encrypted image in directory './out'");
     stats.entropy_after = entropy(&encrypted_image);
+
+    println!("===========================================================");
+    println!("Stats of {}", filename.to_str().unwrap());
+    println!("Entropy original:\t{}", stats.entropy_before);
+    println!("Entropy encrypted:\t{}", stats.entropy_after);
 
     stats
 }
