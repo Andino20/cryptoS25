@@ -1,21 +1,7 @@
-use image::GrayImage;
-use rand::Rng;
-use std::path::Path;
 
 fn main() {
-    let mut rng = rand::rng();
-    let image_folder = Path::new("../images");
-    let filename = image_folder.join("img01.jpg");
-
-    let img = image::open(&filename).expect("Failed to open image!");
-    let img: GrayImage = img.to_luma8();
-
-    let k = 5;
-    let n: Vec<u32> = vec![k];
-
-
-
-    println!("N: {:?}", n);
+    let n: Vec<u32> = vec![0, 128, 192, 448, 512];
+    println!("N: {:?}", n.iter().sum::<u32>());
 }
 
 fn entropy(data: &[u8]) -> f32 {
