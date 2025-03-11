@@ -1,3 +1,10 @@
 **/target
 **/out
 **/.idea
+
+# Latex Stuff
+**/*.aux
+**/*.fdb_latexmk
+**/*.fls
+**/*.log
+**/*.synctex.gz

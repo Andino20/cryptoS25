@@ -1,0 +1,36 @@
+\documentclass{article}
+
+\usepackage{inputenc}[utf8]
+
+\title{{\Huge Aufgabenblatt 02}\\Einführung in die Kryptographie PS}
+\author{Andreas Schlager}
+
+\begin{document}
+    \maketitle
+    \section{Aufgabe 6}
+    \textit{Erklären sie, warum bei Hamming ECC (Error Correction Code) die Parity Bits zwischen den Datenbits
+    eingefügt werden und nicht einfach alle geschlossen den Datenbits vorangestellt oder
+    angehängt werden. Illustrieren sie das anhand eines Beispiels unter Verwendung
+    eines (15,11)-Hamming Codes.}\vspace*{1em}\newline
+    In einer Hamming-codierten Nachricht befinden sich die Paritätsbits nicht am Anfang oder Ende der Nachricht, 
+    sondern an speziellen Positionen, die Zweierpotenzen entsprechen (z.B. $1, 2, 4, 8, \dots$). 
+    Diese Positionen haben in der Binär-darstellung die Form einer einzelnen Eins, umgeben von Nullen:
+    \begin{center}
+        \begin{tabular}{c|c} 
+            Position & Binärdarstellung\\\hline
+            1 & 000001\\
+            2 & 000010\\
+            4 & 000100\\
+            8 & 001000\\
+            16 & 010000\\
+            32 & 100000
+        \end{tabular}
+    \end{center}
+    Diese Eigenschaft ermöglicht eine effiziente Fehlererkennung und -korrektur durch eine XOR-Verknüpfung.
+    Wird eine entsprechende Wahl der Paritätsbits getroffen (odd oder even), dann ergibt die XOR-Verknüpfung 
+    aller Positionen, an denen eine Eins steht, stets null wenn kein Fehler aufgetreten ist. Ansonsten ist das 
+    Ergebnis die Position des Bits, welches fehlerhaft übertragen wurde. Falls mehrere Bits gekippt sind, 
+    entsteht zumindest ein unerwartetes Ergebnis. Dadurch ist zwar erkennbar, dass ein Fehler vorliegt, 
+    er kann jedoch nicht behoben werden.
+    
+\end{document}
