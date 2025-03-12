@@ -1,0 +1,3 @@
+[submodule "libraries/rust_hammingcode"]
+	path = libraries/rust_hammingcode
+	url = https://github.com/tckmn/rustyham
