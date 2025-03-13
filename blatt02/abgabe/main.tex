@@ -1,6 +1,7 @@
 \documentclass{article}
 
 \usepackage{inputenc}[utf8]
+\usepackage[T1]{fontenc}
 
 \title{{\Huge Aufgabenblatt 02}\\Einführung in die Kryptographie PS}
 \author{Andreas Schlager}
@@ -17,7 +18,7 @@
     Diese Positionen haben in der Binär-darstellung die Form einer einzelnen Eins, umgeben von Nullen:
     \begin{center}
         \begin{tabular}{c|c} 
-            Position & Binärdarstellung\\\hline
+            \textbf{Position} & \textbf{Binärdarstellung}\\\hline
             1 & 000001\\
             2 & 000010\\
             4 & 000100\\
@@ -27,10 +28,19 @@
         \end{tabular}
     \end{center}
     Diese Eigenschaft ermöglicht eine effiziente Fehlererkennung und -korrektur durch eine XOR-Verknüpfung.
+    Da die Einsen an unterschiedlichen Positionen sind, beeinflussen sie sich später in der Berechnung nicht gegenseitig.
     Wird eine entsprechende Wahl der Paritätsbits getroffen (odd oder even), dann ergibt die XOR-Verknüpfung 
     aller Positionen, an denen eine Eins steht, stets null wenn kein Fehler aufgetreten ist. Ansonsten ist das 
     Ergebnis die Position des Bits, welches fehlerhaft übertragen wurde. Falls mehrere Bits gekippt sind, 
     entsteht zumindest ein unerwartetes Ergebnis. Dadurch ist zwar erkennbar, dass ein Fehler vorliegt, 
     er kann jedoch nicht behoben werden.
-    
+    \subsection{Beispiel Hamming(15,11)}
+    Angenommen man möchte das Datenwort $10110111011_2$ übertragen und durch einen Hamming ECC absichern,
+    dann würde die ganze Nachricht mit den Paritätsbits wie folgt aussehen:
+    \begin{center}
+        \begin{tabular}{l|ccccccccccccccc}
+            \textbf{Position} & 1 & 2 & 3 & 4 &5&6&7&8&9&10&11&12&13&14&15\\\hline
+            \textbf{Nachricht} & $P_1$ & $P_2$ & 1 & $P_3$ &0&1&1&$P_4$& 0 & 1 & 1& 1 &0 & 1 & 1
+        \end{tabular}
+    \end{center}
 \end{document}
