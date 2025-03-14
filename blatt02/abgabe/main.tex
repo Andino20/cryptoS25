@@ -2,6 +2,8 @@
 
 \usepackage{inputenc}[utf8]
 \usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage[ngerman]{babel}
 
 \usepackage{amsmath}
 
@@ -10,6 +12,7 @@
 
 \begin{document}
     \maketitle
+    \tableofcontents
     \section{Aufgabe 6}
     \textit{Erklären Sie, warum bei Hamming ECC (Error Correction Code) die Parity Bits zwischen den Datenbits
     eingefügt werden und nicht einfach alle geschlossen den Datenbits vorangestellt oder
@@ -127,7 +130,30 @@
     \end{enumerate}
     Das Problem entsteht dann, wenn der Scanner zwangsläufig leicht unterschiedliche Merkmale wahrnimmt. Je nach 
     Druck oder Position des Fingers werden die Messungen beeinflusst und unterscheiden sich dementsprechend voneinander.
-    In weitere Folge würde sich der Schlüssel ebenfalls leicht unterscheiden, wodurch der/die Nutzer/in nicht
+    In weitere Folge würde sich der Schlüssel ebenfalls leicht unterscheiden, wodurch der/die Nutzer:in nicht
     authentifiziert werden würde. Um eine größere Zuverlässigkeit zu erzielen, können bei der Registrierung 
     zusätzlich Fehlerkorrekturdaten gespeichert.
+    \section{Aufgabe 8}
+    \textit{Erklären Sie das Fuzzy Commitment Scheme zur Erzeugung von kryptographischen Schlüsseln aus 
+    biometrischen Messungen. Welche Rolle spielen dabei fehlerkorrigierende Codes? (siehe S.67f des 
+    \href{https://www.cosy.sbg.ac.at/~uhl/biometrics_slides.pdf}{Biometrie Skriptums})}\vspace*{1em}\newline
+    Bei biometrischen Kryptosystemen spielt die Verwaltung der Schlüssel eine wichtige Rolle. Dafür gibt zwei
+    Haupansätze: \textbf{Key-Generation Schemes} und \textbf{Key-Binding Schemes}.
+    \subsection{Key-Generation Schemes}
+    Bei Key-Generation Schemes werden die Ergebnisse der biometrischen Messung als Schlüssel interpretiert. Das bedeutet
+    die biometrischen Merkmale dienen als Zufallsquelle für den \textbf{gesamten} Schlüssel. Dadurch müssen auch keine
+    Schlüssel gespeichert werden, wodurch das System vereinfacht wird und kein sicheres Speicherkonzept notwendig ist.
+    Allerdings muss bei jedem Authentifizierungsversuch der Schlüssel zu 100\% korrekt erzeugt werden, da sonst die 
+    Authentifizierung fehlschlägt. Deshalb benötigt man zusätzliche Fehlerkorrekturdaten, um eine Toleranz bei der Messung
+    zu erlauben. Außerdem gibt es ein Sicherheitsrisiko, da der gesamte Schlüssel aus den biometrischen Daten erzeugt werden
+    kann. Sobald ein Angreifer eine verwertbare biometrische Probe hat, ist der Schlüssel dauerhaft komprimiert.
+    \subsection{Key-Binding Schemes}
+    Key-Binding Schemes verwenden einen, von den biometrischen Daten \textbf{unabhängigen}, Schlüssel. Der Schlüssel
+    wird bei der Registrierung zufällig erzeugt, über eine Funktion an eine biometrische Probe gebunden und anschließend
+    gespeichert. Über einen erneute Messung des Merkmals, den gespeicherten Daten und einem entsprechenden 
+    Wiederherstellungsverfahren kann der Schlüssel zur Authentifizierung wieder erzeugt werden. Auch in diesem Fall
+    wird in den gespeicherten Daten eine Form von fehlerkorrigierendem Code eingebettet um die Variationen 
+    der Messung auszugleichen. Da in diesem Fall der Schlüssel unabhängigen ist, kann im Fall einer Komprimierung
+    einfach ein neuer erzeugt werden. 
+    \subsubsection{Fuzzy Commitment Scheme}
 \end{document}
