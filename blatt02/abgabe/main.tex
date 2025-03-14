@@ -3,19 +3,21 @@
 \usepackage{inputenc}[utf8]
 \usepackage[T1]{fontenc}
 
+\usepackage{amsmath}
+
 \title{{\Huge Aufgabenblatt 02}\\Einführung in die Kryptographie PS}
 \author{Andreas Schlager}
 
 \begin{document}
     \maketitle
     \section{Aufgabe 6}
-    \textit{Erklären sie, warum bei Hamming ECC (Error Correction Code) die Parity Bits zwischen den Datenbits
+    \textit{Erklären Sie, warum bei Hamming ECC (Error Correction Code) die Parity Bits zwischen den Datenbits
     eingefügt werden und nicht einfach alle geschlossen den Datenbits vorangestellt oder
-    angehängt werden. Illustrieren sie das anhand eines Beispiels unter Verwendung
+    angehängt werden. Illustrieren Sie das anhand eines Beispiels unter Verwendung
     eines (15,11)-Hamming Codes.}\vspace*{1em}\newline
     In einer Hamming-codierten Nachricht befinden sich die Paritätsbits nicht am Anfang oder Ende der Nachricht, 
-    sondern an speziellen Positionen, die Zweierpotenzen entsprechen (z.B. $1, 2, 4, 8, \dots$). 
-    Diese Positionen haben in der Binär-darstellung die Form einer einzelnen Eins, umgeben von Nullen:
+    sondern an speziellen Positionen, die Zweierpotenzen entsprechen (z.B. $1, 2, 4, 8, \dots$).
+    Sie zeichnen sich dadurch aus, dass ihre Binärdarstellung genau eine gesetzte 1 hat.
     \begin{center}
         \begin{tabular}{c|c} 
             \textbf{Position} & \textbf{Binärdarstellung}\\\hline
@@ -43,4 +45,89 @@
             \textbf{Nachricht} & $P_1$ & $P_2$ & 1 & $P_3$ &0&1&1&$P_4$& 0 & 1 & 1& 1 &0 & 1 & 1
         \end{tabular}
     \end{center}
+    Das Ziel ist eine Auswahl der Paritätsbits in Abhängigkeit der Position mit Einsen, sodass eine XOR-Verknüpfung
+    der Positionen Null ergibt. Die Paritätsbits beeinflussen sich in der Berechnung nicht gegenseitig, da eben alle
+    eine Zweierpotenz als Stelle haben. Für das Beispiel versucht man nun spaltenweise eine geeignete Auswahl der Bits
+    zu treffen. Dafür schreibt man alle Positionen an denen Einsen 
+    auftreten in Binärdarstellung untereinander auf.
+    \[
+    \begin{array}{c c c}
+        \begin{tabular}{c|cccc}
+            Position & $b_4$ & $b_3$ & $b_2$ & $b_1$\\\hline
+            3 & 0 & 0 & 1 & 1\\
+            6 & 0 & 1 & 1 & 0\\
+            7 & 0 & 1 & 1 & 1\\
+            10 & 1 & 0 & 1 & 0\\
+            11 & 1 & 0 & 1 & 1\\
+            12 & 1 & 1 & 0 & 0\\
+            14 & 1 & 1 & 1 & 0\\
+            15 & 1 & 1 & 1 & 1\\\hline
+            Parity & $P_4$ & $P_3$ & $P_2$ & $P_1$\\\hline
+            XOR & 0 & 0 & 0 & 0
+        \end{tabular} &\Longrightarrow&
+        \begin{tabular}{c|cccc}
+            Position & $b_4$ & $b_3$ & $b_2$ & $b_1$\\\hline
+            3 & 0 & 0 & 1 & 1\\
+            6 & 0 & 1 & 1 & 0\\
+            7 & 0 & 1 & 1 & 1\\
+            10 & 1 & 0 & 1 & 0\\
+            11 & 1 & 0 & 1 & 1\\
+            12 & 1 & 1 & 0 & 0\\
+            14 & 1 & 1 & 1 & 0\\
+            15 & 1 & 1 & 1 & 1\\\hline
+            Parity & 1 & 1 & 1 & 0\\\hline
+            XOR & 0 & 0 & 0 & 0
+        \end{tabular}
+    \end{array}
+    \]
+    Die vollständige Nachricht lautet somit:
+    \begin{center}
+        \begin{tabular}{l|ccccccccccccccc}
+            \textbf{Position} & 1 & 2 & 3 & 4 &5&6&7&8&9&10&11&12&13&14&15\\\hline
+            \textbf{Nachricht} & $0$ & $1$ & 1 & $1$ &0&1&1&$1$& 0 & 1 & 1& 1 &0 & 1 & 1
+        \end{tabular}
+    \end{center}
+    Die Wahl der Paritätsbits führt zu einer Gleichung der folgenden Form, wobei $B(n)$ die Binärdarstellung
+    von $n$, $\oplus$ die XOR-Verknüpfung ist.
+    \[
+        B(3) \oplus \cdots\oplus B(15) \oplus B(8) \oplus B(4) \oplus B(2) = 0_2
+    \]
+    Die Position $8, 4, 2$ sind vorhanden, weil die Paritätsbits $P_4, P_3, P_2$ laut Tabelle Eins sein müssen.
+    Würde nun ein Bit $x$ bei der Übertragung kippen, gäbe es zwei Fälle. Einerseits könnte eine Null zu einer Eins geworden
+    sein, wodurch in der Berechnung eine zusätzliche Stelle $B(x)$ hinzu kommt. Dadurch würde der Empfänger folgendes
+    Ergebnis erhalten:
+    \begin{align*}
+        B(3) \oplus \cdots\oplus B(15) \oplus B(8) \oplus B(4) \oplus B(2)\oplus B(x) &=\\
+        0_2 \oplus B(x) &= B(x)
+    \end{align*}
+    Also genau die Stelle an der ein Fehler passiert ist. Andererseits könnte auch eine Eins zu einer Null geworden
+    sein. Dadurch fehlt genau ein Term auf der linken Seite, um das Ergebnis Null zu erhalten. Angenommen $B(x) = B(3)$. 
+    \begin{align*}
+        B(6) \oplus \cdots\oplus B(15) \oplus B(8) \oplus B(4) \oplus B(2) = 0_2 \oplus B(3) = B(3)
+    \end{align*}
+    \section{Aufgabe 7}
+    \textit{Erklären Sie, warum es allgemein schwierig ist, aus biometrischen Messungen kryptographisches 
+    Schlüsselmaterial zu gewinnen. Illustrieren Sie das ganz konkret anhand der Features/Merkmale
+    einer bestimmten biometrischen Modalität (also wie würde man konkret einen Schlüssel
+    generieren und was ist das Problem).}\vspace*{1em}\newline
+    Ein wichtiges Merkmal eines guten kryptographischen Systems ist, dass eine kleine Änderung des Schlüssels
+    zu einem komplett anderem Ciphertext führt. Registriert man nun ein biometrisches Merkmal durch eine Messung, 
+    um daraus einen  Schlüssel zu erzeugen, ist es daher wichtig bei jeder weiteren Messung des gleichen Merkmals 
+    auch wieder den gleichen Schlüssel zu generieren. Andernfalls wird die Authentifizierung scheitern. Wie man
+    aus der Messlehre allerdings weiß, sind kleine Messungenauigkeiten unumgänglich.
+    \subsection{Fingerabdruck-Schlüssel}
+    Fingerabdrücke sind bei jedem Menschen einzigartig und bieten sich daher zur biometrischen Authentifizierung an.
+    Um von einem Fingerabdruck einen kryptographischen Schlüssel zu generieren, gibt es mehrere Schritte:
+    \begin{enumerate}
+        \item Über einen optischen Fingerabdruck-Scanner wird ein Bild des Fingers erfasst. Dafür wird
+        die Fingerfläche beleuchtet, um Hebungen und Vertiefungen sichtbar zu machen.
+        \item Aus dem Bild werden Merkmale wie die Positionen, die Winkel und die Verzweigungen der Fingerlinien extrahiert.
+        Diese Merkmale werden auch \textbf{Minutien} genannt.
+        \item Die Minutien-Werte werden in eine strukturierte Form gebracht und in binärer Darstellung als Schlüssel interpretiert.
+    \end{enumerate}
+    Das Problem entsteht dann, wenn der Scanner zwangsläufig leicht unterschiedliche Merkmale wahrnimmt. Je nach 
+    Druck oder Position des Fingers werden die Messungen beeinflusst und unterscheiden sich dementsprechend voneinander.
+    In weitere Folge würde sich der Schlüssel ebenfalls leicht unterscheiden, wodurch der/die Nutzer/in nicht
+    authentifiziert werden würde. Um eine größere Zuverlässigkeit zu erzielen, können bei der Registrierung 
+    zusätzlich Fehlerkorrekturdaten gespeichert.
 \end{document}
