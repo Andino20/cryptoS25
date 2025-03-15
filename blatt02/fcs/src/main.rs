@@ -1,5 +1,6 @@
-use fcs::{encryption, rustyham as hamming_lib};
+use fcs::hamming;
 
 fn main() {
-    encryption::hello_encryption();
+    let key: Vec<u8> = vec![0x42; 16];
+    println!("{}", hamming::to_hex_string(&key));
 }
