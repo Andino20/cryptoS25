@@ -2,8 +2,10 @@
 
 \usepackage{inputenc}[utf8]
 \usepackage[T1]{fontenc}
+\usepackage{url}
 \usepackage{hyperref}
 \usepackage[ngerman]{babel}
+\usepackage{graphicx}
 
 \usepackage{amsmath}
 
@@ -108,6 +110,7 @@
     \begin{align*}
         B(6) \oplus \cdots\oplus B(15) \oplus B(8) \oplus B(4) \oplus B(2) = 0_2 \oplus B(3) = B(3)
     \end{align*}
+    Dadurch könnte der Empfänger den Fehler an der Stelle $3$ beheben.
     \section{Aufgabe 7}
     \textit{Erklären Sie, warum es allgemein schwierig ist, aus biometrischen Messungen kryptographisches 
     Schlüsselmaterial zu gewinnen. Illustrieren Sie das ganz konkret anhand der Features/Merkmale
@@ -136,7 +139,7 @@
     \section{Aufgabe 8}
     \textit{Erklären Sie das Fuzzy Commitment Scheme zur Erzeugung von kryptographischen Schlüsseln aus 
     biometrischen Messungen. Welche Rolle spielen dabei fehlerkorrigierende Codes? (siehe S.67f des 
-    \href{https://www.cosy.sbg.ac.at/~uhl/biometrics_slides.pdf}{Biometrie Skriptums})}\vspace*{1em}\newline
+    \href{https://www.cosy.sbg.ac.at/~uhl/biometrics_slides.pdf}{Biometrie Skriptums} \cite{Uhl2016})}\vspace*{1em}\newline
     Bei biometrischen Kryptosystemen spielt die Verwaltung der Schlüssel eine wichtige Rolle. Dafür gibt zwei
     Haupansätze: \textbf{Key-Generation Schemes} und \textbf{Key-Binding Schemes}.
     \subsection{Key-Generation Schemes}
@@ -154,8 +157,115 @@
     Wiederherstellungsverfahren kann der Schlüssel zur Authentifizierung wieder erzeugt werden. Auch in diesem Fall
     wird in den gespeicherten Daten eine Form von fehlerkorrigierendem Code eingebettet um die Variationen 
     der Messung auszugleichen. Da in diesem Fall der Schlüssel unabhängigen ist, kann im Fall einer Komprimierung
-    einfach ein neuer erzeugt werden. 
+    einfach ein neuer erzeugt werden.
     \subsubsection{Fuzzy Commitment Scheme}
     Das Fuzzy Commitment Scheme beinhaltet zwei Phasen: die Registrierung neuer Schlüsseldaten und die Verifikation über
     die Wiederherstellung des Schlüssel, durch eine biometrische Probe.
+    \begin{figure}[h]
+        \caption{Fuzzy Commitment Scheme Diagram (siehe \cite{Uhl2016}, S67)}
+        \centering
+        \includegraphics[width=0.85\textwidth]{img/fcs.png}
+        \label{fig:fcs}
+    \end{figure}
+    Während der Registrierungsphase, wird ein zufälliger Schlüssel $S$ erzeugt und dessen Hashwert $h(S)$ gespeichert.
+    Der Schlüssel wird um redundanten Bits ergäntzt, um eine Form von fehlerkorrigierenden Code $C$ zu erhalten (Hamming Code, 
+    Reed-Solomon Code, etc.). Anschließend wird $C$ mit der biometrischen Probe $X$ binär durch eine XOR-Operation 
+    verknüpft, um das Wort $W$ zu erzeugen.
+    \[
+        W = C \oplus X
+    \]
+    $W$ wird ebenfalls gespeichert.
+
+    Während der Authentifizierung wird eine weitere biometrische Probe $Y$ gemessen. Gleicht $Y$ nun der ersten Probe $X$,
+    so kann über eine XOR-Verknüpfung das Codewort $C$ wiederhergestellt werden.
+    \begin{align*}
+        C\oplus X \oplus Y &= C \oplus (X\oplus Y) &&\mid X = Y\\
+        &= C\oplus 0\\
+        &= C 
+    \end{align*}
+    In den meisten validen Authentifizierungsversuchen wird sich $Y$ durch die Messvariationen leicht von $X$ unterscheiden. 
+    Dadurch würde man das fehlerbehaftete Codewort $C'$ erhalten, woraus dank der Fehlerkorrektur trotzdem der Schlüssel
+    $S$ generiert werden kann. Zuletzt wird der Hashwert des errechneten Schlüssel mit dem gespeicherten verglichen.
+    Bei Gleichheit wird akzeptiert, sonst abgelehnt.
+
+    \section{Aufgabe 9}
+    \textit{Implementieren sie das Fuzzy Commitment Scheme mit Hilfe von Hamming ECC
+    (gerne library verwenden für letzteres). Als binäres biometrisches Template generieren 
+    sie ein zufälliges binäres Muster, der Schüssel soll 128 Bits lang sein. Die
+    biometrische Varianz simulieren sie durch Kippen einiger Bits. Dokumentieren sie
+    den korrekten Key-release trotz biometrischer Varianz.}\vspace*{1em}\newline
+    Für Implementierung des Fuzzy Commitment Schemes wurde die Programmiersprache Rust verwendet. Ein 128-Bit langer
+    Schlüssel wird zufällig erzeugt und in ein Byte-Array mit dem Namen \verb|key| gespeichert. Außerdem wird 
+    der Hashwert berechnet und der Hamming Code generiert.
+    \begin{verbatim}
+let key = encryption::generate_key_128();
+let key_hash = hash(&key);    
+let hamming_code = hamming::encode(&key)
+    .expect("Failed to encode key");
+    \end{verbatim}
+    Dadurch enstanden in einem Versuch folgende Werte für den Schlüssel $S$ und den Hamming Code $C$:
+    \begin{center}
+        \begin{tabular}{cl}
+            Variable & Hexadezimal Werte\\\hline
+            $S$ & \verb|BC4F553EF28ED254DDB3E73605894457|\\
+            $C$ & \verb|77C57AA9FBCA3B49A9BB67CE6C0B128957|
+        \end{tabular}        
+    \end{center}
+    Man kann erkennen, dass das Codewort $C$ um zwei Stellen länger ist, als der Schlüssel $S$, weil durch den 
+    Hamming Code genau 8 Paritätsbits hinzugefügt wurden. Das entspricht einem Hamming(136, 128) Code. 
+    
+    Als nächstes wird eine biometrische Probe $X$ zufällig generiert, wobei die Länge an die Code-Größe angepasst wird.
+    Die erzeugte Probe $X$ wird danach mit dem Codewort $C$ kombiniert, um $W$ zu erhalten. 
+    \begin{verbatim}
+let x = rng().random_iter()
+    .take(hamming_code.len())
+    .collect::<Vec<u8>>();
+let w = fuse(&hamming_code, &x);
+    \end{verbatim}
+    \begin{center}
+        \begin{tabular}{cl}
+            Variable & Hexadezimal Wert\\\hline
+            $X$ & \verb|2E162EEF2F66DAC34B3B09A96D129F56EA|\\
+            $W$ & \verb|59D35446D4ACE18AE2806E6701198DDFBD|
+        \end{tabular}
+    \end{center}
+    Die \verb|fuse|-Funktion iteriert über jedes Byte der beiden Variablen und verknüpft sie mittels XOR.
+    \begin{verbatim}
+fn fuse(x: &[u8], y: &[u8]) -> Vec<u8> {
+    x.iter().zip(y.iter()).map(|(&a, &b)| a ^ b).collect()
+}
+    \end{verbatim}
+    Im zweiten Teil wird die Probe $X$ zufällig mutiert, indem ein Bit geändert wird. Dadurch soll ein 
+    Authentifizierungsversuch simuliert wird, bei dem Messvariationen aufgetreten sind, das biometrische Material
+    aber grundsätzlich übereinstimmt. Die erzeugte Probe $Y$ wird anschließend mit den Helferdaten $W$ zu $C'$ kombiniert.
+    \begin{verbatim}
+let y = random_bit_flip(&x);
+let c = fuse(&w, &y);
+    \end{verbatim}
+    \begin{center}
+        \begin{tabular}{cl}
+            Variable & Hexadezimal Wert\\\hline
+            $Y$ & \verb|2E162EEF2F66DAC34B3B09A96D129F5EEA|\\
+            $C'$ & \verb|77C57AA9FBCA3B49A9BB67CE6C0B128157|
+        \end{tabular}
+    \end{center}
+    Zuletzt wird das Codewort $C'$ fehlerkorrigiert, um die Veränderungen auszugleichen und den Schlüssel $S'$ 
+    herzustellen. Stimmt der Hashwert dieses Schlüssel mit dem ursprünglichen von $S$ überein, so war die 
+    Authentifizierung erfolgreich, ansonsten nicht.
+    \begin{verbatim}
+let s = hamming::error_correct(&c);
+
+let auth_hash = hash(&s);
+if auth_hash == key_hash {
+    println!("Authenticated");
+} else {
+    println!("Not authenticated");
+}
+    \end{verbatim}
+    Man erkennt an diesem Beispiel gut, dass zu keinem Zeitpunkt der ursprüngliche Schlüssel gespeichert werden muss und nur 
+    Anfangs zur Berechnung von $h(S)$ und $C$ gebraucht wird. Im Speicher liegen also nur $W$ und $h(S)$, woraus weder
+    die biometrischen Daten noch der Schlüssel errechnet werden können.
+    \newpage
+    \bibliographystyle{plainnat}
+    \bibliography{refs}
 \end{document}
