@@ -1,0 +1,6 @@
+[package]
+name = "ceasar_cipher_brute_force"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
