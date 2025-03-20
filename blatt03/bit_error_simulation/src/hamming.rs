@@ -1,95 +1,85 @@
-use bitvec::prelude::*;
-use std::fmt::Write;
-
-pub fn encode(data: &[u8]) -> Result<Vec<u8>, &'static str> {
-    if data.is_empty() {
-        return Err("data is too short");
-    }
-
-    let data: BitVec<_, Msb0> = BitVec::from_slice(data);
-
-    let mut code: BitVec<u8, Msb0> = BitVec::new();
-    let mut bit_index = 1;
-    for bit in &data {
-        while is_power_of_2(bit_index) {
-            code.push(false);
-            bit_index += 1;
-        }
-        code.push(*bit);
-        bit_index += 1;
-    }
-
-    let mut parities = 0usize;
-    for (index, bit) in code.iter().enumerate() {
-        if *bit {
-            parities ^= index + 1;
-        }
-    }
-    let parity_count = code.len() - data.len();
-    for (index, value) in
-        (0..parity_count as u32).map(|x| (2usize.pow(x) - 1, (parities >> x) & 1 == 1))
-    {
-        code.set(index, value);
-    }
-
-    Ok(code.into_vec())
+pub struct HammingCode {
+    pub parity_bits: usize,
+    pub total_bits: usize,
+    pub code: Vec<Vec<u8>>,
 }
 
-pub fn error_correct(code: &[u8]) -> Vec<u8> {
-    let mut code: BitVec<u8, Msb0> = BitVec::from_slice(code);
-    let error_pos = code.iter().enumerate().fold(0usize, |mut acc, (i, bit)| {
-        if *bit {
-            acc ^= i + 1;
-        }
-        acc
+pub fn encode(data: &[u8], block_size: usize) -> Option<HammingCode> {
+    let bits = data.len() * 8;
+    let data_bits_per_block = data_bits(block_size)?;
+    let block_count = (bits as f32 / data_bits_per_block as f32).ceil() as usize;
+
+    let mut blocks = vec![vec![0u8; block_size / 8]; block_count];
+
+    blocks.iter_mut().fold(0, |mut starting_bit, block| {
+        encode_block(block, data, starting_bit);
+        starting_bit += data_bits_per_block;
+        starting_bit
     });
 
-    if error_pos > 0 && error_pos - 1 < code.len() {
-        let value = *code.get(error_pos - 1).unwrap();
-        code.set(error_pos - 1, !value);
-    }
-
-    // Remove parity bits (+ 1 is weird and probably not right)
-    let parity_count = code.len().ilog2() + 1;
-    for i in (0..parity_count).rev() {
-        let i = 2usize.pow(i) - 1;
-        code.remove(i);
-    }
-
-    code.into_vec()
-}
-
-pub fn to_hex_string(data: &[u8]) -> String {
-    data.iter().fold(String::new(), |mut output, b| {
-        let _ = write!(output, "{b:02X}");
-        output
+    Some(HammingCode {
+        code: blocks,
+        total_bits: block_count * block_size,
+        parity_bits: (block_size - data_bits_per_block) * block_count,
     })
 }
 
-pub fn to_bit_string(data: &[u8]) -> String {
-    data.iter().fold(String::new(), |mut output, &b| {
-        (0..8).for_each(|i| {
-            let _ = write!(output, "{}", (b >> (7 - i)) & 1);
-        });
-        let _ = write!(output, " ");
-        output
-    })
+fn encode_block(hamming_block: &mut [u8], data: &[u8], starting_bit: usize) {
+    let mut current_data_bit = starting_bit;
+    for bit in 0..hamming_block.len() * 8 {
+        if !(bit + 1).is_power_of_two() {
+            let block_index = (bit as f32 / 8.0).floor() as usize;
+            if let Some(data_bit) = bit_at(&data, current_data_bit) {
+                hamming_block[block_index] |= data_bit << (bit % 8);
+                current_data_bit += 1;
+            }
+        }
+    }
+
+    let mut parity_bits = 0;
+    for bit_pos in 0..hamming_block.len() * 8 {
+        if let Some(bit) = bit_at(&hamming_block, bit_pos) {
+            if bit > 0 {
+                parity_bits ^= bit_pos + 1;
+            }
+        }
+    }
+
+    for bit_pos in 0..hamming_block.len() * 8 {
+        if (bit_pos + 1).is_power_of_two() {
+            let block = (bit_pos as f32 / 8.0).floor() as usize;
+            hamming_block[block] |= ((parity_bits & 1) << (bit_pos % 8)) as u8;
+            parity_bits >>= 1;
+        }
+    }
 }
 
-fn is_power_of_2(n: usize) -> bool {
-    (n > 0) && (n & !(n - 1) == n)
+fn bit_at(data: &[u8], pos: usize) -> Option<u8> {
+    let block = (pos as f32 / 8.0).floor() as usize;
+    if let Some(byte) = data.get(block) {
+        Some(byte >> (pos % 8) & 0x01)
+    } else {
+        None
+    }
+}
+
+fn data_bits(code_size: usize) -> Option<usize> {
+    match code_size {
+        8 => Some(4),
+        16 => Some(11),
+        32 => Some(26),
+        64 => Some(57),
+        128 => Some(120),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::hamming::is_power_of_2;
+    use crate::hamming::*;
 
     #[test]
-    fn test_power_of_2() {
-        assert!(!is_power_of_2(11));
-        assert!(!is_power_of_2(31));
-
-        assert!(is_power_of_2(2));
-        assert!(is_power_of_2(8));
+    fn test_encode() {
+        let data = [0xFF; 1];
     }
 }

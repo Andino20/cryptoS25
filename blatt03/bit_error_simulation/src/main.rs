@@ -1,36 +1,15 @@
-use bit_error_simulation::fcs::{enroll, verify};
 use bit_error_simulation::hamming;
 use rand::{Rng, rng};
+use std::fmt::Write;
 
 fn main() {
-    println!("VARIABLE\tVALUE");
-
-    // Generate random biometric sample data with the same size as the code
-    let x = rng().random_iter().take(17).collect::<Vec<u8>>();
-    println!("X\t\t{}", hamming::to_hex_string(&x));
-
-    let helper = enroll(&x).expect("Failed to enroll biometric sample.");
-
-    println!("h(S):\t\t{:X}", helper.key_hash);
-
-    /*
-    for _ in 0..1 {
-        let y = burst_error(&x, 10);
-        println!("Y\t\t{}", hamming::to_hex_string(&y));
-
-        if verify(&y, &helper) {
-            println!("Authenticated!");
-        } else {
-            println!("Not authenticated!");
-        }
+    let key = [0xFFu8; 16];
+    let hamming = hamming::encode(&key, 32).unwrap();
+    for block in hamming.code {
+        println!("{}", to_bit_string(&block));
     }
-     */
-
-    let x: [u8; 1] = [0xFF];
-    for _ in 0..10 {
-        let y = burst_error(&x, 4);
-        println!("y: {:08b}", y[0]);
-    }
+    println!("Total message size: {} bits", hamming.total_bits);
+    println!("Parity Bits: {}", hamming.parity_bits);
 }
 
 fn random_bit_flip(code: &[u8], amount: u32) -> Vec<u8> {
@@ -45,11 +24,10 @@ fn random_bit_flip(code: &[u8], amount: u32) -> Vec<u8> {
     code
 }
 
-fn burst_error(code: &[u8], length: usize) -> Vec<u8> {
+fn burst_error(code: &[u8], starting_bit: usize, length: usize) -> Vec<u8> {
     let mut code = code.to_vec();
 
-    let starting_pos = rng().random_range(0..code.len() * 8);
-    for bit in (starting_pos..length + starting_pos) {
+    for bit in (starting_bit..length + starting_bit) {
         let block = (bit as f32 / 8.0).floor() as usize;
         if let Some(byte) = code.get_mut(block) {
             *byte ^= 1 << (bit % 8);
@@ -57,4 +35,11 @@ fn burst_error(code: &[u8], length: usize) -> Vec<u8> {
     }
 
     code
+}
+
+fn to_bit_string(data: &[u8]) -> String {
+    data.iter().rev().fold(String::new(), |mut acc, x| {
+        write!(acc, "{:08b} ", x).unwrap();
+        acc
+    })
 }
