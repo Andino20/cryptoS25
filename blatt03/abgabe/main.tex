@@ -8,8 +8,12 @@
 \usepackage{hyperref}
 \usepackage[ngerman]{babel}
 \usepackage{graphicx}
-
+\usepackage{pgfplots}
 \usepackage{amsmath}
+\usepackage{amssymb}
+
+% Generate external pdf and import
+\pgfplotsset{width=9cm,compat=1.9}
 
 \title{{\Huge Aufgabenblatt 03}\\Einführung in die Kryptographie PS}
 \author{Andreas Schlager}
@@ -32,8 +36,113 @@
     Hamming-Codes zur Fehlerkorrektur an. Dokumentieren sie die Auswirkung von
     verschiedenen Fehlerarten (Quantität, Qualität) auf die Möglichkeit, den Schlüssel
     tatsächlich korrekt zu erzeugen.}\vspace*{1em}\newline
-    Hallo
+    Ein regulärer Hamming-Code ist in der Lage 1-Bit-Fehler zu korrigieren und 2-Bit-Fehler zu erkennen.
+    Würde man die Länge des Codes genau an den Schlüssel $S$ oder die biometrischen Daten $X$ anpassen,
+    könnte man demnach auch nur einen Bit-Fehler durch die Messung korrigieren. In den meisten Fällen variiert die Messung
+    jedoch stärker als nur ein einzelnes verändertes Bit. Die Lösung ist den Schlüssel in mehrere Blöcke
+    entsprechender Größen aufzuteilen und anschließend aus jedem einen Hamming Code zu generieren. Treten 
+    nun Fehler in unterschiedlichen Blöcken auf, können diese ohne Probleme korrigiert werden, wobei
+    zwei oder mehr Fehler im gleichen Block nach wie vor nicht behoben werden können. In wie viele Blöcke man 
+    den Schlüssel segmentieren sollte, hängt davon ab welchen Grad der Fehlerkorrektur und wie viel Redundanz
+    man möchte. Kleine Blöcke, also kürzere Hamming Codes, führen zu einer größeren Redundanz 
+    (siehe Abbildung \ref{fig:redundancyvsdata}.) und somit zu einer verbesserten Messtoleranz, 
+    die benötigte Datenmenge steigt jedoch ebenfalls.
+    
+    \input{figures/hamming_redundancy.tex}
 
+    Um diesen Trade-off zu visualisieren, werden unterschiedliche Hamming-Code-Größen verglichen, wobei verschiedene
+    Arten von Bitfehlern (gleichverteilt, oder burst) auftreten. Hierbei ist $H(n, d)$ ein $n$-Bit langer Hamming-Code
+    mit $d$ Datenbits und $n-d$ Paritätsbits.
+    In der Simulation werden folgende Hamming-Code Blockgrößen getestet:
+    \[
+        \begin{array}{ccccc}
+            H(8,4) & H(16,11) & H(32,26) & H(64,57) & H(128,120)
+        \end{array}
+    \]
+    \subsection{Code}
+    Der Funktionsweise des Code aus Aufgabe 9.) ist im wesentlichen gleich geblieben, wobei die Hamming-Code Bibliothek um die 
+    Funktionalität der Segmentierung in die gewünschten Blockgrößen erweitert wurde. So führt ein Aufruf
+    der Funktion \verb|hamming::encode(data, n)| dazu, dass die Daten in entsprechenden viele $H(n,d)$ Codes
+    aufgeteilt werden. Angenommen es werden $x$-Bits in $H(n,d)$ Blöcke überführt, gäbe es pro Block $d$ Datenbits.
+    Die Anzahl der dadurch entstehenden Blöcke entspricht
+    \begin{equation} \label{eq:1}
+        \#\text{Blöcke}=\left\lceil\frac{x}{d}\right\rceil.
+    \end{equation}
+    \begin{figure}[h]
+        \includegraphics[width=\textwidth]{img/segmentation.pdf}
+        \caption{Segmentierung von 128-Bits auf fünf $H(32,26)$ Codes}
+        \label{fig:segmentation}
+    \end{figure}
+    Füllen die Daten die Hamming Blöcke nicht vollständig aus, werden sie mit Nullen ergänzt. Teilt man also einen
+    128-Bit Datenblock auf fünf $H(32,26)$ Codes auf, wären im letzten Block noch 24-Datenbits und zwei Bits Padding.\newline
+    
+    \subsubsection{Simulation}
+    Für die Simulation werden 1-15 Bitfehler (in gleichverteilt und burst Variante) mit den unterschiedlichen
+    Hamming Codes jeweils 50 Mal getestet. Die Anzahl der erfolgreichen Authentifizierungsversuche wird gezählt und auf
+    der Konsole ausgegeben.
+    \begin{verbatim}
+for flip_amount in 1..=15 {
+    print!("{flip_amount}\t");
+    for block_size in [8, 16, 32, 64, 128] {
+        let successful_attempts = (0..50)
+            .map(|_| fcs_run(block_size, flip_amount))
+            .filter(|&r| r)
+            .count();
+        print!("{successful_attempts}\t");
+    }
+    println!();
+}
+    \end{verbatim}
+    \subsection{Ergebnisse}
+    Im Allgemeinen ergab die Simulation, dass die Toleranz der Messung durch die Segmentierung in kleinere Codes
+    steigt. Das war zu erwarten, da die Redundanz bei kleineren Codes größer ist und somit mehr Bits für die
+    Fehlerkorrektur verfügbar sind. Die Simulation ergab außerdem, dass Burstfehler für Hamming Codes Schwierigkeiten
+    bereiten, da häufiger mehrere Fehler in den gleichen Blöcken auftreten.
+    \subsubsection{Gleichverteilte Bitfehler}
+    Bei den Ergebnissen (siehe Tab. \ref{tab:uniform_result}.) ist klar zu erkennen, dass durch die Segmentierung 
+    mehrere zufällig Fehler erkannt und korrigiert werden konnten.
+    Nicht besonders überraschend ist auch, dass 1-Bit Fehler von jedem Code in allen 50 Versuchen korrigiert 
+    wurden. Der $H(8,4)$-Code war in der Lage im Durchschnitt die meisten Bitfehler zu korrigieren, da die
+    Hälfte des Codes Redundanz ist. Außerdem ist erkenntlich: Je länger der Code (also weniger Redundanz), desto
+    weniger Bits können korrigiert werden. Eine Überraschung war, dass der $H(128,120)$-Code es manchmal schaffte
+    einen großen Bitfehler zu korrigieren. Um zu verstehen wieso es trotz des großen Fehlers zu einer erfolgreichen
+    Authentifizierung kam, muss man sich überlegen wie der Schlüssel in den Blöcken positioniert ist.\newline
+    Der Schlüssel wurde aus 128 zufälligen Bits konstruiert und in einen $H(128,120)$-Code umgewandelt.
+    Wegen der Gleichung \ref{eq:1} ergeben sich zwei 128-Bit Blöcke, mit Platz für jeweils 120-Datenbits.
+    Der Schlüssel füllt nun die 120-Bit des ersten Blocks vollständig aus und die übrigen acht Bit kommen
+    in den zweiten Block. Das bedeutet, der zweite Block beinhaltet acht Schlüsselbits und \textbf{112 Füllbits}.
+    Um die Berechnung zu vereinfachen wird näherungsweise angenommen, dass der zweite Block ausschließlich aus
+    Füllbits besteht. Sei $X$ eine Zufallsvariable, die den Block beschreibt, in dem ein zufälliges Bit 
+    gekippt ist. Da beide Blöcke gleich groß sind und die Wahrscheinlichkeit der Position des gekippten Bits
+    gleichverteilt ist, folgt für die Wahrscheinlichkeiten $P(X=x)$
+    \[
+        P(X=1) = P(X=2) = 0.5.
+    \]
+    Sei außerdem $Y$ eine Zufallsvariable, welche die Anzahl der gekippten Bits im ersten Block beschreibt.
+    Betrachtet man beispielsweise den Fall von 6-Bitfehlern, dann ist für eine erfolgereiche Authentifizierung
+    höchsten ein Fehler im ersten Block erlaubt.
+    \begin{align*}
+        P(Y \leq 1) &= P(Y = 0) + P(Y = 1) = P(X=2)^{6} + {6\choose 1}P(X=1)^1P(X=2)^{5}\\
+        &=0.5^{6} + 6\cdot 0.5^1 \cdot 0.5^5 = 0.109375
+    \end{align*}
+    \[
+        \mathbb{E}\left[\text{"'erfolgreiche Authentifizierungen"'}\right] =  50 \cdot 0.109375 = 5.46875
+    \]
+    Im Schnitt erwartet man also bei dieser Implementierung des FCS und sechs gleichverteilten Bitfehlern 
+    ungefähr $5.47$ erfolgereiche Authentifizierungen. Diese Tatsache spiegelt sich auch in der Ergebnistabelle 
+    \ref{tab:uniform_result} wieder.
+
+    \input{figures/result_uniform_error.tex}
+    \subsubsection{Burstfehler}  
+    Die Simulation-Ergebnisse (siehe Tabelle \ref{tab:burst_result}.) zeigen, dass Burstfehler eine besondere Herausforderung für die Hamming-Codes darstellen. 
+    Da sich die Fehler über mehrere aufeinanderfolgende Bits erstrecken, kommt es häufiger vor, dass mehrere Fehler 
+    innerhalb desselben Blocks auftreten. Besonders bei längeren Codes mit geringerer Redundanz führte dies dazu, 
+    dass die Fehlerkorrektur versagte. Bei kürzeren Codes war die Wahrscheinlichkeit höher, dass die Fehler auf mehrere 
+    Blöcke verteilt wurden, wodurch die Korrekturmechanismen etwas greifen konnten. Dennoch zeigte sich, 
+    dass Hamming-Codes grundsätzlich weniger robust gegenüber Burstfehlern sind als gegenüber zufällig verteilten 
+    Bitfehlern.
+    \input{figures/result_burst.tex}
+    
     \section{Aufgabe 11}
     \textit{Implementieren sie den Caesar Cipher (Slide 14) mit z als Variable/Schlüssel für
     Buchstaben-orientierte Textverschlüsselung. Führen sie eine (Ciphertext-only) brute
