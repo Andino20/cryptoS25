@@ -10,6 +10,5 @@
 **/*.synctex.gz
 **/*.out
 **/*.toc
-**/*.pdf
 **/*.md5
 **/*.auxlock
