@@ -74,8 +74,55 @@
         \label{fig:segmentation}
     \end{figure}
     Füllen die Daten die Hamming Blöcke nicht vollständig aus, werden sie mit Nullen ergänzt. Teilt man also einen
-    128-Bit Datenblock auf fünf $H(32,26)$ Codes auf, wären im letzten Block noch 24-Datenbits und zwei Bits Padding.\newline
-    
+    128-Bit Datenblock auf fünf $H(32,26)$ Codes auf, wären im letzten Block noch 24-Datenbits und zwei Füllbits.
+    Für das FCS wird wieder ein zufälliger 128-Bit Schlüssel $S$ erstellt, welcher dann in mehrere Hamming-Code-Blöcke kodiert wird.
+    Die Blockgrößer wird über \verb|hamming_block_size| bestimmt und nimmt in der Simulation die Werte $\left[8,16,32,64,128\right]$
+    an. Die Blöcke werden anschließend in einen durchgängigen Block umgewandelt, um die Kombination mit der biometrischen Probe
+    zu vereinfachen.
+    \begin{verbatim}
+fn fcs_run(hamming_block_size: usize, flip_amount: usize) -> bool {
+    let s = rng().random_iter().take(16).collect::<Vec<u8>>();
+    let hs = hash(&s);
+    let c = hamming::encode(&s, hamming_block_size)
+        .expect("encode failed")
+        .to_continuous();
+    // ...
+}
+    \end{verbatim}
+    Als nächstes wird eine biometrische Probe $X$ zufällig generiert, wobei die Probe gleich groß wie der Schlüssel $S$ ist.
+    Um $X$ und $C$ zu kombinieren, müssen beide gleich groß sein. Durch die Paritäts- und Füllbits ist allerdings $|C|>|X|$.
+    Um dieses Problem zu umgehen wird $X$ ebenfalls Hamming-kodiert und dadurch ebenfalls durch Füllbits ergänzt.
+    \begin{verbatim}
+let x = rng().random_iter().take(s.len()).collect::<Vec<u8>>();
+let x = hamming::encode(&x, hamming_block_size)
+    .expect("encode failed")
+    .to_continuous();
+
+let w = fuse(&c, &x);
+    \end{verbatim}
+    Die Messvariation wird simuliert, indem zufällige Bits von $X$ gekippt werden. Für diesen Zweck gibt es zwei unterschiedliche
+    Funktionen: \verb|random_bit_flip| und \verb|burst_error|.
+    \begin{verbatim}
+let y = random_bit_flip(&x, flip_amount);
+// oder
+let y = burst_error(&x, rng().random_range(0..s.len()*8), flip_amount);
+    \end{verbatim}
+    Anschließend wird $Y$ mit $W$ kombiniert um das Codewort $C'$ zu erhalten, welches fehlerkorrigiert wird. Zu diesem Zeitpunkt
+    besteht $C'$ noch immer aus den einzelnen Hamming-Blöcken. Um den Schlüssel $S'$ zu erhalten, müssen die Datenbits aus dem
+    Code extrahiert werden.
+    \begin{verbatim}
+let c_prime = fuse(&w, &y);
+
+let mut ecc = HammingCode::from_continuous(c_prime, hamming_block_size);
+ecc.error_correct();
+
+let s_prime = ecc.extract(s.len() * 8);
+    \end{verbatim}
+    Zuletzt werden die Hashwerte verglichen, um festzustellen, ob der Authentifizierung erfolgreich war.
+    \begin{verbatim}
+let hs_prime = hash(&s_prime);
+hs == hs_prime
+    \end{verbatim}
     \subsubsection{Simulation}
     Für die Simulation werden 1-15 Bitfehler (in gleichverteilt und burst Variante) mit den unterschiedlichen
     Hamming Codes jeweils 50 Mal getestet. Die Anzahl der erfolgreichen Authentifizierungsversuche wird gezählt und auf
@@ -142,7 +189,7 @@ for flip_amount in 1..=15 {
     dass Hamming-Codes grundsätzlich weniger robust gegenüber Burstfehlern sind als gegenüber zufällig verteilten 
     Bitfehlern.
     \input{figures/result_burst.tex}
-    
+    \newpage
     \section{Aufgabe 11}
     \textit{Implementieren sie den Caesar Cipher (Slide 14) mit z als Variable/Schlüssel für
     Buchstaben-orientierte Textverschlüsselung. Führen sie eine (Ciphertext-only) brute
@@ -150,9 +197,28 @@ for flip_amount in 1..=15 {
     von z wäre nicht bekannt) und überlegen sie sich ein oder mehrere Kriterien um den
     tatsächlich richtigen Plaintext unter allen erzeugten zu eruieren (und wenden sie das
     alles auf Beispiele an).}\vspace*{1em}\newline
-    \newpage
-    Welt
-    \newpage
-    \bibliographystyle{plainnat}
-    \bibliography{refs}
+    Der Caesar Cipher ist ein Verschlüsselungsverfahren, bei dem jeder Buchstabe im Plaintext um einen feste Anzahl
+    im Alphabet verschoben wird. Die Anzahl, um die verschoben wird, ist der Schlüssel $z$. Da es im englischen Alphabet
+    26 verschiedene Buchstaben geht, gibt es nur \textbf{25 mögliche Schlüssel} (0 wird ignoriert, weil eine Verschiebung 
+    keinen Effekt hätte). Aufgrund der geringen Anzahl an möglichen Schlüssel ist der Caesar Cipher leicht durch Brute-Force 
+    Verfahren zu knacken.
+    \subsection{Code}
+    Für die Implementierung werden nur Buchstaben im englischen Alphabet betrachtet, die sich auch in der ASCII-Tabelle befinden.
+    Um den Ciphertext zu berechnen, wird über jedes Zeichen des Plaintexts iteriert. Ist das Zeichen ein Buchstabe, wird
+    er im Alphabet um den Schlüssel verschoben und an den Ausgabetext angehängt. Falls das Zeichen kein Buchstabe ist, wird 
+    nicht verschoben und es kommt unverändert an die Ausgabe.
+    \begin{verbatim}
+fn caesar_cipher(text: &str, key: usize) -> String {
+    let key = (key % 26) as u8;
+    text.chars()
+        .map(|c| shift_letter(c, key))
+        .fold(String::new(), |mut out, c| {
+            out.push(c);
+            out
+        })
+    \end{verbatim}
+    Jeder Character hat einen zugewiesenen Wert entsprechend der ASCII-Tabelle. Die Kleinbuchstaben befinden sich z.B. an
+    den Stellen 97-122. Um einen Buchstaben zu verschieben, ist es hilfreich mit einem Wertebereich von 0-25 zu rechnen.
+    Deshalb wird der Character zuerst um den Wert des ersten Buchstabens reduziert. Anschließend kann der Schlüsselwert
+    addiert werden 
 \end{document}

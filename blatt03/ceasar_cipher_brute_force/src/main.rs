@@ -44,9 +44,9 @@ fn caesar_cipher(text: &str, key: usize) -> String {
     let key = (key % 26) as u8;
     text.chars()
         .map(|c| shift_letter(c, key))
-        .fold(String::new(), |mut acc, c| {
-            acc.push(c);
-            acc
+        .fold(String::new(), |mut out, c| {
+            out.push(c);
+            out
         })
 }
 
