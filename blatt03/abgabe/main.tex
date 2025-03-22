@@ -69,7 +69,7 @@
         \#\text{Blöcke}=\left\lceil\frac{x}{d}\right\rceil.
     \end{equation}
     \begin{figure}[h]
-        \includegraphics[width=\textwidth]{img/segmentation.pdf}
+        % \includegraphics[width=\textwidth]{img/segmentation.pdf}
         \caption{Segmentierung von 128-Bits auf fünf $H(32,26)$ Codes}
         \label{fig:segmentation}
     \end{figure}
@@ -218,7 +218,125 @@ fn caesar_cipher(text: &str, key: usize) -> String {
         })
     \end{verbatim}
     Jeder Character hat einen zugewiesenen Wert entsprechend der ASCII-Tabelle. Die Kleinbuchstaben befinden sich z.B. an
-    den Stellen 97-122. Um einen Buchstaben zu verschieben, ist es hilfreich mit einem Wertebereich von 0-25 zu rechnen.
-    Deshalb wird der Character zuerst um den Wert des ersten Buchstabens reduziert. Anschließend kann der Schlüsselwert
-    addiert werden 
+    den Stellen 97-122. Um einen Buchstaben zu verschieben, ist es hilfreich mit einem Wertebereich von 0-25 zu rechnen.,
+    weshalb der Character zuerst um den Wert von 'a' oder 'A' reduziert wird. Anschließend kann der Schlüsselwert
+    modulo 26 addiert werden. Zuletzt wird der Character noch auf den ursprünglichen Wertebereich zurück verschoben. 
+    \begin{verbatim}
+fn shift_letter(c: char, shift: u8) -> char {
+    match c {
+        'A'..='Z' => ((c as u8 - b'A' + shift) % 26 + b'A') as char,
+        'a'..='z' => ((c as u8 - b'a' + shift) % 26 + b'a') as char,
+        _ => c,
+    }
+}
+    \end{verbatim}
+    \subsubsection{Ciphertext-only Angriffe}
+    Bei einem Ciphertext-only Angriff steht dem Angreifer nur der verschlüsselte Text zur Verfügung.
+    Das Ziel ist es den Schlüssel mittels verschiedener Ansätze zu finden.
+    Im Fall des Caesar Ciphers gibt es nur 25 mögliche Schlüssel, weshalb der Keyspace
+    leicht vollständig durchsucht werden kann. Im weiteren werden zwei verschiedene
+    Brute-Force Ansätze betrachtet: Manuelle Überprüfung und automatisierte Schlüsselsuche mittels 
+    Buchstaben Häufigkeiten.
+
+    \paragraph{Manuelle Suche}
+    Der denkbar einfachste Ansatz einer Brute-Force Attacke ist alle Schlüssel auszuprobieren und
+    manuell (also durch anschauen) jede mögliche Entschlüsselung zu bewerten.
+    Da in diesem Fall nur 25 Ergebnisse entstehen, kann der korrekte Plaintext leicht entdeckt werden.
+    Für dieses Beispiel wird der folgenden Plaintext um einen zufällig gewählten Schlüssel verschoben:
+    \begin{quote}
+        "` In other words, if two keys are equal, their hashes must be equal. Violating this property is a logic error. "'
+    \end{quote}
+    \begin{verbatim}
+let cipher = caesar_cipher(plain, rng().random_range(0..26));
+    \end{verbatim}
+    Danach wird der Ciphertext mit allen möglichen Schlüsseln entschlüsselt und jedes Ergebnis auf die Konsole ausgegeben.
+    Ist ein Buchstabe um einen Schlüssel $k$ verschoben worden, dann kann er mit dem gleichen Algorithmus
+    und $26 - k$ entschlüsselt werden.
+    \begin{verbatim}
+(0..26)
+    .map(|shift| (caesar_cipher(&cipher, 26 - shift), shift))
+    .for_each(|(s, key)| println!("Key {:02}: {}", key, s));
+    \end{verbatim}
+    \begin{figure}
+        \includegraphics[width=\textwidth]{text_results/console_out1.png}
+        \caption{Ausgabe des Brute-Force Angriffs (Manual Checking)}
+        \label{fig:console_manual_checking}
+    \end{figure}
+    Wie in Abbildung \ref{fig:console_manual_checking} durch manuelles Überprüfen zu sehen ist,
+    war der Schlüssel $k=20$. In der zweiten Zeile ist außerdem zu sehen, dass
+    eine Verschiebung mit 0 keine Auswirkungen hat. Der größte Vorteil dieses
+    Verfahrens ist natürlich die Einfachheit. Ist der Keyspace allerdings etwas größer,
+    z.B. 2000 mögliche Schlüssel, wird die manuelle Überprüfung schon mühsam. Man wäre
+    allerdings noch weit von der Größer der Keyspaces praktischer Algorithmen entfernt.
+    Dieser Ansatz verliert also schnell seine Effektivität.
+    \paragraph{Buchstaben Häufigkeiten} Ein effektiverer Ansatz könnte jedem Entschlüsselungsergebnis
+    eine Art Bewertung geben. Die Bewertung sollte dann ein Maß dafür sein, für wie wahrscheinlich das Ergebnis
+    der korrekte Plaintext ist. Dadurch entsteht ein automatisiertes Ranking der Schlüsselkandidaten.
+    Die besten Ergebnisse können wieder manuell überprüft werden. Eine mögliche Metrik für
+    die Qualität des Ergebnisses, ist die Häufigkeit der auftretenden Buchstaben. In jeder Sprache
+    kommen gewisse Buchstaben häufiger vor als andere. Man kann ein Referenz Histogram der
+    englischen Sprache mit dem enstehenden Histogram des Entschlüsselungsergebnisses vergleichen
+    und die Abweichung berechnen. Je höher die Abweichung ist, desto geringer soll der 
+    Score sein. Als Referenz habe ich ein Buchstaben Histrogram der englischen Sprache verwendet.
+    \begin{verbatim}
+let english_letter_frequencies: [f32; 26] = [
+    0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015, 
+    0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749, 
+    0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758, 
+    0.00978, 0.02360, 0.00150, 0.01974, 0.00074,
+];
+    \end{verbatim}
+    Jede Stelle im Array entspricht der relativen Häufigkeit eines Buchstabens, wobei
+    'e' der häufigste mit $\approx 12.7\%$ ist.
+    Für den Angriff werden zuerst alle Entschlüsselungsergebnisse gesammelt und deren Histogramme berechnet.
+    Dann wird jedes mit der Referenz verglichen um den Score zu erhalten. Zuletzt
+    wird noch nach dem Score in absteigender Reihenfolge sortiert.\newpage
+    \begin{verbatim}
+let decrypt_attempts = (0..26)
+    .map(|shift| caesar_cipher(&cipher, 26 - shift))
+    .collect::<Vec<_>>();
+
+let histograms = decrypt_attempts
+    .iter()
+    .map(|plain| letter_frequency(plain))
+    .collect::<Vec<_>>();
+
+let mut scores = histograms
+    .iter()
+    .enumerate()
+    .map(|(key, h)| (key, score(&english_letter_frequencies, h)))
+    .collect::<Vec<_>>();
+scores.sort_by(|(_, a), (_, b)| b.partial_cmp(&a).unwrap());
+    \end{verbatim}
+    Für die Berechnung des Scores werden die absoluten Abweichung jedes Buchstabens zu seinem
+    Referenzwert berechnet, die Summe gebildet und durch eine Exponentialfunktion
+    in den Wertebereich $\left[0,1\right]$ transformiert. Ein Score von 1 bedeutet,
+    dass es keine Abweichungen zwischen den Histogrammen gab, ein niedriger Score bedeutet
+    hohe Abweichungen.
+    \begin{verbatim}
+fn score(reference: &[f32; 26], h: &[f32; 26]) -> f32 {
+    E.powf(
+        -reference
+            .iter()
+            .zip(h)
+            .map(|(&x, &y)| (x - y).abs())
+            .sum::<f32>(),
+    )
+}
+    \end{verbatim}
+    Wie in Abbildung \ref{fig:buchstaben_haufigkeit} zu sehen ist, wird der Schlüssel $k=20$ am besten bewertet.
+    Für lange Texte funktioniert diese Methode sehr gut, da sich die Häufigkeit der Referenz immer weiter annähern
+    Wie allerdings in Abbildung \ref{fig:buchstaben_bad} zu sehen ist, führen sehr kurze Texte wie "` World "' zu 
+    Fehleinschätzungen. Das liegt daran, dass wenige Buchstaben nicht genug Information bieten. Das korrekte
+    Ergebnis wird nur an 5. Stelle angezeigt.
+    \begin{figure}
+        \includegraphics[width=\textwidth]{text_results/console_out2.png}
+        \caption{Ausgabe des Brute-Force Angriffs (Buchstaben Häufigkeit)}
+        \label{fig:buchstaben_haufigkeit}
+    \end{figure}
+    \begin{figure}
+        \includegraphics[scale=0.5]{text_results/console_out3.png}
+        \caption{Ausgabe des Brute-Force Angriffs (Buchstaben Häufigkeit) bei kurzen Wörtern}
+        \label{fig:buchstaben_bad}
+    \end{figure}
 \end{document}

@@ -1,3 +1,4 @@
+use rand::{Rng, rng};
 use std::f32::consts::E;
 
 fn main() {
@@ -7,8 +8,8 @@ fn main() {
         0.02758, 0.00978, 0.02360, 0.00150, 0.01974, 0.00074,
     ];
 
-    let plain = "In other words, if two keys are equal, their hashes must be equal. Violating this property is a logic error.";
-    let cipher = caesar_cipher(plain, 5);
+    let plain = "World";
+    let cipher = caesar_cipher(plain, 20);
     println!("Ciphertext: {cipher}");
 
     /*
@@ -36,7 +37,12 @@ fn main() {
 
     println!("Key\tScore\t\tDecryption Result");
     for (key, score) in scores {
-        println!("{:02}\t{:0.5}\t\t{}", key, score, caesar_cipher(&cipher, 26 - key));
+        println!(
+            "{:02}\t{:0.5}\t\t{}",
+            key,
+            score,
+            caesar_cipher(&cipher, 26 - key)
+        );
     }
 }
 
