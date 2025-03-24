@@ -11,6 +11,7 @@
 \usepackage{pgfplots}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{amsthm}
 
 % Generate external pdf and import
 \pgfplotsset{width=9cm,compat=1.9}
@@ -69,7 +70,7 @@
         \#\text{Blöcke}=\left\lceil\frac{x}{d}\right\rceil.
     \end{equation}
     \begin{figure}[h]
-        % \includegraphics[width=\textwidth]{img/segmentation.pdf}
+        \includegraphics[width=\textwidth]{img/segmentation.pdf}
         \caption{Segmentierung von 128-Bits auf fünf $H(32,26)$ Codes}
         \label{fig:segmentation}
     \end{figure}
@@ -122,7 +123,7 @@ let s_prime = ecc.extract(s.len() * 8);
     \begin{verbatim}
 let hs_prime = hash(&s_prime);
 hs == hs_prime
-    \end{verbatim}
+    \end{verbatim}\vspace*{-1em}
     \subsubsection{Simulation}
     Für die Simulation werden 1-15 Bitfehler (in gleichverteilt und burst Variante) mit den unterschiedlichen
     Hamming Codes jeweils 50 Mal getestet. Die Anzahl der erfolgreichen Authentifizierungsversuche wird gezählt und auf
@@ -138,6 +139,33 @@ for flip_amount in 1..=15 {
         print!("{successful_attempts}\t");
     }
     println!();
+}
+    \end{verbatim}
+    Um die gekippten Bits zu simulieren, wird \verb|amount| oft eine zufällige Position gewählt und das Bit 
+    an der Stelle gekippt.
+    \begin{verbatim}
+fn random_bit_flip(code: &[u8], amount: usize) -> Vec<u8> {
+    let mut code = code.to_vec();
+    for _ in 0..amount {
+        let i = rng().random_range(0..code.len());
+        let shift = rng().random_range(0..8);
+        code[i] ^= 1 << shift;
+    }
+    code
+}
+    \end{verbatim}
+    Der Burst-Fehler funktioniert auf ähnliche Weise, nur dass eine einzige Stelle zufällig gewählt wird und von
+    dort aus \verb|amount| Bits gekippt werden.
+    \begin{verbatim}
+fn burst_error(code: &[u8], starting_bit: usize, length: usize) -> Vec<u8> {
+    let mut code = code.to_vec();
+    for bit in starting_bit..length + starting_bit {
+        let block = (bit as f32 / 8.0).floor() as usize;
+        if let Some(byte) = code.get_mut(block) {
+            *byte ^= 1 << (bit % 8);
+        }
+    }
+    code
 }
     \end{verbatim}
     \subsection{Ergebnisse}
@@ -178,8 +206,11 @@ for flip_amount in 1..=15 {
     Im Schnitt erwartet man also bei dieser Implementierung des FCS und sechs gleichverteilten Bitfehlern 
     ungefähr $5.47$ erfolgereiche Authentifizierungen. Diese Tatsache spiegelt sich auch in der Ergebnistabelle 
     \ref{tab:uniform_result} wieder.
-
     \input{figures/result_uniform_error.tex}
+    Um eine etwas realistischer Einschätzung von der Auswirkung der zufälligen Bitfehler zu geben, wurde der Fehler
+    auf den Bereich begrenzt in dem tatsächlich die Datenbits liegen würden. Insgesamt verringert sich dadurch die Anzahl der
+    erfolgreichen Authentifizierungsversuche (siehe \ref{tab:uniform_result_adjusted}).
+    \input{figures/result_uniform_error_adjusted.tex}
     \subsubsection{Burstfehler}  
     Die Simulation-Ergebnisse (siehe Tabelle \ref{tab:burst_result}.) zeigen, dass Burstfehler eine besondere Herausforderung für die Hamming-Codes darstellen. 
     Da sich die Fehler über mehrere aufeinanderfolgende Bits erstrecken, kommt es häufiger vor, dass mehrere Fehler 
@@ -270,14 +301,14 @@ let cipher = caesar_cipher(plain, rng().random_range(0..26));
     allerdings noch weit von der Größer der Keyspaces praktischer Algorithmen entfernt.
     Dieser Ansatz verliert also schnell seine Effektivität.
     \paragraph{Buchstaben Häufigkeiten} Ein effektiverer Ansatz könnte jedem Entschlüsselungsergebnis
-    eine Art Bewertung geben. Die Bewertung sollte dann ein Maß dafür sein, für wie wahrscheinlich das Ergebnis
+    eine Art Bewertung geben. Die Bewertung sollte dann ein Maß dafür sein, wie wahrscheinlich das Ergebnis
     der korrekte Plaintext ist. Dadurch entsteht ein automatisiertes Ranking der Schlüsselkandidaten.
     Die besten Ergebnisse können wieder manuell überprüft werden. Eine mögliche Metrik für
     die Qualität des Ergebnisses, ist die Häufigkeit der auftretenden Buchstaben. In jeder Sprache
     kommen gewisse Buchstaben häufiger vor als andere. Man kann ein Referenz Histogram der
     englischen Sprache mit dem enstehenden Histogram des Entschlüsselungsergebnisses vergleichen
     und die Abweichung berechnen. Je höher die Abweichung ist, desto geringer soll der 
-    Score sein. Als Referenz habe ich ein Buchstaben Histrogram der englischen Sprache verwendet.
+    Score sein. Als Referenz wurde ein Buchstaben Histogram der englischen Sprache verwendet.
     \begin{verbatim}
 let english_letter_frequencies: [f32; 26] = [
     0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015, 
@@ -286,6 +317,7 @@ let english_letter_frequencies: [f32; 26] = [
     0.00978, 0.02360, 0.00150, 0.01974, 0.00074,
 ];
     \end{verbatim}
+    \input{figures/letter_frequencies.tex}
     Jede Stelle im Array entspricht der relativen Häufigkeit eines Buchstabens, wobei
     'e' der häufigste mit $\approx 12.7\%$ ist.
     Für den Angriff werden zuerst alle Entschlüsselungsergebnisse gesammelt und deren Histogramme berechnet.
@@ -307,7 +339,7 @@ let mut scores = histograms
     .map(|(key, h)| (key, score(&english_letter_frequencies, h)))
     .collect::<Vec<_>>();
 scores.sort_by(|(_, a), (_, b)| b.partial_cmp(&a).unwrap());
-    \end{verbatim}
+    \end{verbatim}\vspace*{-1em}
     Für die Berechnung des Scores werden die absoluten Abweichung jedes Buchstabens zu seinem
     Referenzwert berechnet, die Summe gebildet und durch eine Exponentialfunktion
     in den Wertebereich $\left[0,1\right]$ transformiert. Ein Score von 1 bedeutet,
@@ -325,18 +357,108 @@ fn score(reference: &[f32; 26], h: &[f32; 26]) -> f32 {
 }
     \end{verbatim}
     Wie in Abbildung \ref{fig:buchstaben_haufigkeit} zu sehen ist, wird der Schlüssel $k=20$ am besten bewertet.
-    Für lange Texte funktioniert diese Methode sehr gut, da sich die Häufigkeit der Referenz immer weiter annähern
-    Wie allerdings in Abbildung \ref{fig:buchstaben_bad} zu sehen ist, führen sehr kurze Texte wie "` World "' zu 
-    Fehleinschätzungen. Das liegt daran, dass wenige Buchstaben nicht genug Information bieten. Das korrekte
-    Ergebnis wird nur an 5. Stelle angezeigt.
-    \begin{figure}
+    Für lange Texte funktioniert diese Methode sehr gut, da sich die Häufigkeit der Referenz immer weiter annähern.
+    Wie allerdings in Abbildung \ref{fig:buchstaben_bad} zu sehen ist, führen sehr kurze Texte wie "`World"' zu 
+    Fehleinschätzungen. Wenige Buchstabe bieten nicht genug Informationen, damit sich das Histogram der Referenz annähert.
+    Das korrekte Ergebnis wird in diesem Fall an der fünften Position angezeigt.
+    \begin{figure}[h!]
         \includegraphics[width=\textwidth]{text_results/console_out2.png}
         \caption{Ausgabe des Brute-Force Angriffs (Buchstaben Häufigkeit)}
         \label{fig:buchstaben_haufigkeit}
     \end{figure}
-    \begin{figure}
+    \begin{figure}[h!]
         \includegraphics[scale=0.5]{text_results/console_out3.png}
         \caption{Ausgabe des Brute-Force Angriffs (Buchstaben Häufigkeit) bei kurzen Wörtern}
         \label{fig:buchstaben_bad}
     \end{figure}
+    \section{Aufgabe 12}
+    \textit{Benennen und erklären Sie mindestens 4 unterschiedliche DDOS Angriffe und diskutieren Sie jeweilige Abwehrmaßnahmen.}
+    \vspace*{1em}\newline
+    Ein DDOS (Distributed Denial-of-Service) Angriff zielt darauf ab, die Ressourcen eines Servers/Systems zu erschöpfen,
+    um es unnereichbar oder unbenutzbar zu machen. Der Zweck von DDOS-Attacken ist oft von politischer oder wirtschaftlicher Natur.
+    Angreifer machen sich Schwachstellen auf etwa der Protokollebene oder Applikationsebene von Netzwerkanwendungen zunutze.
+    \paragraph{Slowloris Attack} Bei der Slowloris-Attacke nutzt der Angreifer die limitierte Anzahl der zur gleichen Zeit verfügbaren 
+    Sockets aus. Ein Socket ist eine Schnittstelle, die für die Kommunikation zweier Programme übers Netzwerk genutzt wird, die meistens
+    Protokolle wie TCP oder UDP verwendet. Hört ein Teilnehmer plötzlich auf Daten zu senden, schließt der Server die Verbindung nach einer
+    festgelegten Timeout-Zeit, um den Socket wieder freizugeben. Der Angreifer baut nun mehrere Verbindungen
+    zum Server auf und sendet Datenpaket gerade noch schnell genug, sodass die Verbindungen erhalten bleibt und kein
+    Timeout stattfindet. Dadurch bleiben die Sockets belegt und können nicht freigegeben werden. Es gibt momentan
+    keine Möglichkeit eine Slowloris-Attacke zu verhindern, allerdings können die Auswirkungen verringert werden. 
+    Man kann die maximale Anzahl der offenen Verbindungen des Servers erhöhen, eine Limit an offenen Verbindungen
+    mit der gleichen IP-Adresse festlegen, oder die Timeout-Zeit verringern.
+    \paragraph{SYN-Flood} Bei einer SYN-Flood nutzt der Angreifer den Ablauf einer TCP-Kommunikation aus, um mehrere
+    Verbindungen aufrecht zu erhalten. Normalerweise besteht die TCP-Kommunikation aus einem dreiwege Handshake, um
+    die Verbindung zwischen Client und Server herzustellen. Der Client sendet eine SYN-Anfrage an den Server,
+    woraufhin der Server den Verbindungsaufbau mit einer SYN-ACK-Nachricht bestätigt, hierbei reserviert der Server
+    die Verbindung. Der Client würde für gewöhnlich eine Bestätigung an den Server zurücksenden und die Verbindung wäre
+    aufgebaut. In diesem Fall kommt aber keine Bestätigung des Clients und die Verbindung bleibt weiterhin reserviert.
+    In diesem Fall kann wieder die Anzahl der offenen Verbindungen pro IP limitiert werden oder SYN-Pakete von 
+    verdächtigen Quellen durch die Firewall blockiert werden.
+    \paragraph{UDP-Flood} UDP ist ein verbindungsloses Netzwerkprotokoll, es gibt also keine Garantie, dass ein gesendetes
+    Paket auch ankommt. Bei einer UDP-Flood sendet ein Angreifer große UDP-Pakete an unterschiedliche Ports des Empfängers und
+    zielt damit ab dessen Verarbeitungsmöglichkeiten zu überlasten. Normalerweise würde ein Server zuerst überprüfen, ob es
+    ein aktives Programm gibt, welches auf den entsprechenden Port lauscht. Wenn kein Programm gefunden werden konnte
+    versucht der Server den Sender zu pingen, um ihn darüber zu informieren. Die Quelladresse innerhalbs des Pakets
+    ist allerdings nicht die echte des Senders, wodurch der Ping ins Leere geht. Dadurch sind die Ressourcen des 
+    Servers schnell erschöpft und der normale Datenverkehr wird gestört. Eine Möglichkeit UDP-Floods zu bekämpfen ist die
+    Begrenzung der Reaktionsrate von ICMP-(Ping)-Paketen.
+    \paragraph{Smurf-Angriffe} Bei einem Smur-Angriff werden ICMP-Pakete mit veränderter Quelladresse als Broadcast 
+    an Rechner innerhalb eines Netzes geschickt. Die Quelladresse wird dabei zu der des Opfers geändert. Als Resultat
+    erhält das Opfer von jedem Teilnehmer des Netzes eine Ping Antwort, wodurch dessen Ressourcen schnell erschöpft werden.
+    Smurf-Angriffe sind in der Praxis nicht mehr häufig, da sie als gelöstes Sicherheitsproblem betrachtet werden. Am einfachsten
+    löst man das Problem, indem IP-Broadcastadressen an jedem Router zu deaktivieren, was bei neueren Router-Geräten 
+    meist Standard ist.
+    \section{Aufgabe 13}
+    \textit{Zeigen sie mit Hilfe der auf Slide 52 hergeleiteten Formel, dass der Shift Cipher, wenn
+    alle 26 Schlüssel $z$ gleich wahrscheinlich sind, perfekt sicher ist - für einbuchstabige
+    Plaintexte.}
+    \begin{proof}
+        Ein Verschlüsselungsverfahren heißt \textbf{perfekt sicher}, wenn
+        für alles $x$ aus $\mathbf{P}$ und $y$ aus $\mathbf{C}$ gilt:
+        \begin{equation}\label{eq:perfectly_safe}
+            P(X=x) = P(X=x\mid Y = y).
+        \end{equation}
+        Wir müssen also zeigen, dass die a priori und a posteriori Wahrscheinlichkeiten für jeden Buchstaben 
+        gleich sind. Die a priori Wahrscheinlichkeit ist bekannt, da jeder Buchstabe die gleiche Wahrscheinlichkeit
+        hat aufzutreten.
+        \[
+            P(X=x) = \frac{1}{26}
+        \]
+        Für die a posteriori Wahrscheinlichkeit nutzen wir die Formel, die in der VO aus dem Satz von Bayes abgeleitet wurde.
+        \begin{equation}\label{eq:aposteriori}
+            P(X=x\mid Y=y) = \frac{P(X=x)\cdot\sum_{x\in D_z(y)}P(Z=z)}{\sum_{z\mid y\in \mathbf{C}(z)} P(Z=z)\cdot P(X=D_z(y))}
+        \end{equation}
+        Um aus dem Plain-Buchstaben den Cipher-Buchstaben zu erhalten, wird er um eine fixe Zahl verschoben (modulo 26).
+        Das bedeutet es gibt nur einen einzigen Schlüssel, der aus dem Klartext den Ciphertext macht. Laut Angabe ist jeder
+        Schlüssel $z$ gleich wahrscheinlich. Daraus folgt:
+        \[
+            \sum_{x\in D_z(y)}P(Z=z) = P(Z=z) = \frac{1}{26}.
+        \]
+        Grundsätzlich könnte jeder Schlüssel $z\in \{1, \dots, 26\}$ mit einem passenden Buchstaben $x$ den verschlüsselten Buchstaben $y$ generieren.
+        Daher gibt es auch 26 mögliche Schlüssel-Buchstaben-Paare die einen Cipherbuchstaben erzeugen. Die
+        Wahrscheinlichkeit für einen aus der Entschlüsselung entstehenden Buchstaben ist aufgrund der 1:1 Zuweisung von Schlüssel-Buchstabe ebenfalls
+        $1/26$.
+        \[
+            \sum_{z\mid y\in \mathbf{C}(z)} P(Z=z)\cdot P(X=D_z(y)) =26\cdot P(Z=z)\cdot P(X=D_z(y)) = 26\cdot \frac{1}{26} \cdot \frac{1}{26}=\frac{1}{26} 
+        \]
+        Alle Werte in der Formel \ref{eq:aposteriori} eingesetzt ergibt sich:
+        \[
+            P(X=x \mid Y = y) = \frac{\frac{1}{26} \cdot \frac{1}{26}}{\frac{1}{26}} = \frac{1}{26} = P(X=x)
+        \]
+        Damit ist die Gleichung \ref{eq:perfectly_safe} gezeigt.
+    \end{proof}
+    \section{Zeitaufwand}
+    Die Zeiteinheit ist in Stunden [h]. Für die spezielleren Anforderungen der ersten Aufgabe, musste ich
+    die Hamming-Code Bibliothek erweitern, um die unterschiedlichen Hamming-Codes zu unterstützen.
+    \begin{table}[h]
+        \begin{tabular}{l|ccc|r}
+            Aufgabe & Coding & Recherche & Schreiben & $\sum$\\\hline
+            Aufgabe 10 & 5 & 0.5 & 6  & 11.5 \\
+            Aufgabe 11 & 1 & 1   & 3  & 5 \\
+            Aufgabe 12 & 0 & 1.5 & 1  & 2.5 \\
+            Aufgabe 13 & 0 & 1.5   & 1  & 2.5 \\\hline
+            $\sum$     & 6 & 4.5   & 11 & 21.5
+        \end{tabular}
+    \end{table}
+    
 \end{document}

@@ -43,7 +43,8 @@ fn fcs_run(hamming_block_size: usize, flip_amount: usize) -> bool {
 
     //println!("------------------------------------------------");
     //let y = random_bit_flip(&x, flip_amount);
-    let y = burst_error(&x, rng().random_range(0..s.len()*8), flip_amount);
+    let y = random_bit_flip_range(&x, 0..s.len()*8, flip_amount);
+    //let y = burst_error(&x, rng().random_range(0..s.len()*8), flip_amount);
     //println!("Y\t{}", to_hex_string(&y));
 
     let c_prime = fuse(&w, &y);
@@ -71,20 +72,29 @@ fn random_bit_flip(code: &[u8], amount: usize) -> Vec<u8> {
     code
 }
 
+fn random_bit_flip_range(code: &[u8], bit_range: std::ops::Range<usize>, amount: usize) -> Vec<u8> {
+    let mut code = code.to_vec();
+    for _ in 0..amount {
+        let bit = rng().random_range(bit_range.clone());
+        let block = bit / 8;
+        let shift = rng().random_range(0..8);
+        code[block] ^= 1 << shift;
+    }
+    code
+}
+
 fn fuse(a: &[u8], b: &[u8]) -> Vec<u8> {
     a.iter().zip(b).map(|(&a, &b)| a ^ b).collect()
 }
 
 fn burst_error(code: &[u8], starting_bit: usize, length: usize) -> Vec<u8> {
     let mut code = code.to_vec();
-
     for bit in starting_bit..length + starting_bit {
         let block = (bit as f32 / 8.0).floor() as usize;
         if let Some(byte) = code.get_mut(block) {
             *byte ^= 1 << (bit % 8);
         }
     }
-
     code
 }
 
