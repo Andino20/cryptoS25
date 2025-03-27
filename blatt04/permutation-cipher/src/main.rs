@@ -9,10 +9,10 @@ fn main() -> std::io::Result<()> {
         let filename = path.file_name().unwrap().to_str().unwrap();
         let original = image::open(&path).expect("Failed to open image");
 
-        for block_size in [1, 2, 4, 8, 16, 32] {
-            let cipher_image = permutation_cipher(&original, block_size);
+        for blocks in [1, 2, 4, 8, 16, 32] {
+            let cipher_image = permutation_cipher(&original, blocks);
             cipher_image
-                .save(format!("./img/out/{:02}_{}", block_size, filename))
+                .save(format!("./img/out/{:02}_{}", blocks, filename))
                 .expect("Failed to save image");
         }
     }

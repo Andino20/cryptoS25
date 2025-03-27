@@ -1,32 +1,24 @@
-use image::buffer::Pixels;
-use image::{Pixel, Rgba, RgbaImage};
-use std::collections::HashSet;
-use std::thread::{current, scope};
+use image::RgbaImage;
+use std::time::Instant;
 
 mod color;
 
 fn main() -> std::io::Result<()> {
-    /*
     let image_paths = std::fs::read_dir("../img/cipher")?
         .filter_map(Result::ok)
         .map(|e| e.path());
 
     for path in image_paths.filter(|p| p.is_file()) {
         let filename = path.file_name().unwrap().to_str().unwrap();
+        let start = Instant::now();
+        print!("Decrypting {filename}...");
         let cipher_image = image::open(&path).expect("Failed to open image");
         decipher(cipher_image.to_rgba8())
             .save(format!("../img/decipher/{filename}"))
             .unwrap();
+        let duration = start.elapsed();
+        println!(" done! Took: {}ms", duration.as_millis());
     }
-     */
-
-    
-    let img = image::open("./img/02_tloztotk.png")
-        .expect("failed to open image")
-        .to_rgba8();
-    decipher(img)
-        .save("./img/decipher_02_tloztotk.png")
-        .expect("failed to save decipher_02_tloztotk");
 
     Ok(())
 }
@@ -64,5 +56,3 @@ fn similarity_score(row1: &[u8], row2: &[u8]) -> f32 {
         .map(|(chunk1, chunk2)| color::euclidean_distance(chunk1, chunk2))
         .sum::<f32>()
 }
-
-fn swap_rows(raw: &mut [u8], row1: u32, row2: u32) {}
