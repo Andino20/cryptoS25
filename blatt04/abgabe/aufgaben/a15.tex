@@ -8,9 +8,9 @@ nebeneinander liegen, eine Ciphertext only Attacke gegen das verschlüsselte Bil
 Die Implementierung der Ver- und Entschlüsselung wurde vollständig in der Programmiersprache
 \textbf{Rust} geschrieben. Zur Bildmanipulation wird das \href{https://docs.rs/image/latest/image/}{image} Crate verwendet. 
 \subsection{Verschlüsselungsverfahren}
-Um ein Bild zu verschlüsseln, wird das Bild aus dem Speicher geladen, durch \verb|permutation_cipher| mit der
-gewünschten Blockanzahl verschlüsselt und anschließend gespeichert. Für
-dieses Experiment werden $1,2,4,8,16,32$ Blöcke bei unterschiedlichen Bildern getestet. 
+Um ein Bild zu verschlüsseln, wird das Bild aus dem Speicher geladen und durch \verb|permutation_cipher| mit der
+gewünschten Blockanzahl verschlüsselt. Für
+dieses Experiment werden $1,2,4,8,16,32$ Blöcke mit unterschiedlichen Bildern getestet. 
 \begin{verbatim}
 let original = image::open(&path).expect("Failed to open image");
 
@@ -23,8 +23,18 @@ for blocks in [1, 2, 4, 8, 16, 32] {
 \end{verbatim}
 Normalerweiße würde man das Verschlüsselungsverfahren deterministisch anhand eines
 Schlüssel durchführen. Für den Zweck dieses Experiments soll allerdings 
-kein Schlüssel ermittelt werden, daher werden die Zeilen innerhalb eines Blocks
-einfach zufällig vertauscht. Das Bild wird zuerst in RGBA-Farbkanäle umgewandelt (4 Byte pro Pixel)
+kein Schlüssel ermittelt werden, also können die Zeilen innerhalb eines Blocks
+einfach gemischt werden. Dafür werden einfach zwei Zeilen eines Blocks zufällig ausgewählt und
+getauscht. Dieser Vorgang wird dann 1000 Mal wiederholt, um einen gemischten Block zu erhalten.
+\begin{verbatim}
+fn permutation_cipher(original: &image::DynamicImage, blocks: u32) 
+    -> image::DynamicImage {
+    let mut img = original.to_rgba8();
+    let height = img.height();
+    let rows_per_block = height / blocks;
 
+    for block in 0..blocks {
+    
+\end{verbatim}
 \subsection{Ciphtext-only Attacke}
 \subsection{Ergebnisse}
