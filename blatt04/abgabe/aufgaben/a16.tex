@@ -4,4 +4,219 @@ wird über ASCII-Nummern binär dargestellt und mit ensprechendem “binärem”
 Key XOR verschlüsselt, variable Key-länge für Experimente erforderlich). Bestimmen 
 sie mit der in der VO besprochenen “Counting Coincidences” Methode die 
 Länge des jeweils verwendeten Keys.}\vspace*{1em}\newline
-Antwort.
+Zuerst muss ein zufällig Schlüssel mit festlegbarer Länger erzeugt werden. Dafür wurde die
+Funktion \verb|generate_key| erstellt, die eine gewünschte Schlüssellänge erhält und einen entsprechenden 
+Key erzeugt.
+\begin{verbatim}
+fn generate_key(length: usize) -> Vec<u8> {
+    rng().random_iter().take(length).collect::<Vec<u8>>()
+}
+\end{verbatim}
+Der Plaintext kann dann über einen Aufruf der Funktion \verb|short_key_xor| zusammen mit dem Key
+verschlüsselt werden. Falls die Länge des Plaintexts kein Vielfaches der Schlüssellänge ist, wird der String
+mit dem Zeichen $X$ aufgepolstert. Die Füllzeichen werden während der Iteration über die Zeichen des Plaintexts
+angehängt. Die Bytes des Schlüssel wiederholen sich, indem die Position des Zeichens im Plaintext modulo der Schlüssellänge
+gerechnet wird. Für die Verschlüsselung selbst werden die Zeichen des Strings in ASCII umgewandelt und mit dem Key geXORt.
+\begin{verbatim}
+fn short_key_xor(text: &str, key: &[u8]) -> Vec<u8> {
+    let padding = key.len() - text.len() % key.len();
+    text.chars()
+        .chain(std::iter::repeat_n('X', padding))
+        .enumerate()
+        .map(|(i, c)| c as u8 ^ key[i % key.len()])
+        .collect()
+}
+\end{verbatim}
+Um die Länge des Schlüssel zu bestimmen wird der Ciphertext mit jeder möglichen verschobenen Variante von sich selbst
+verglichen. In jeder Iteration werden die übereinstimmenden Bytes, für den entsprechenden \verb|offset|, gezählt. 
+Ist die relative Häufigkeit der gleichen Bytes $>6.65\%$, so ist \verb|offset| die Schlüssellänge. Wird keine
+passende Verschiebung gefunden, wir angenommen, dass der Schlüssel gleich lang wie der originale Text war (Long-Key XOR).
+\begin{verbatim}
+fn counting_coincidences(text: &[u8]) -> usize {
+    for offset in 1..text.len() {
+        let same_bytes = text
+            .iter()
+            .zip(text.iter().chain(text).skip(offset))
+            .filter(|&(a, b)| a == b)
+            .count() as f32
+            / text.len() as f32;
+        if same_bytes > 0.06 {
+            return offset;
+        }
+    }
+    text.len()
+}
+\end{verbatim}
+Da sich der IOC bei der korrekten Verschiebung $6.65\%$ annähert, wurde hier ein Schwellwert von $>6\%$ festgelegt. Dadurch
+werden die korrekten Schlüssellänge auch bei kürzeren Texten identifiziert. Der Algorithmus stoppt sobald ein Wert gefunden wird,
+der die Schwelle überschreitet.
+\subsection{Ergebnisse}
+\textbf{Plaintext}: \textit{Methode von Kasiski: Identische sich wiederholdende Teile des Plaintexts ge-XORed mit dem gleichen Teil des Keys ergeben sich
+wiederholende identische Ciphertext Teile. Die Groesse des Shifts
+zwischen dem Beginn solcher sich wiederholenden Teile im
+Ciphertext sollte daher ein Vielfaches der Key-Laenge sein. Die
+Analyse der gemeinsamen Faktoren dieser Shifts identifiziert den
+haeufigsten Faktor der dann der Key-laenge entspricht.} (siehe Tabelle \ref{tab:CC_result_1})\vspace*{1em}\newline
+Die verwendet Schlüssellänge steht über den Tabellenwerten, die korrekte Verschiebung ist fett markiert. Der letzte Tabelleneintrag
+ist das Ergebnisse des Algorithmus, die geschätzte Schlüssellänge.
+\begin{table}[h]
+    \begin{subtable}[t]{0.3\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 8}}\\\hline
+            SHIFT & IOC\\\hline
+            01&      1.14\%\\
+            02&      0.45\%\\
+            03&      0.45\%\\
+            04&      0.00\%\\
+            05&      0.45\%\\
+            06&      0.00\%\\
+            07&      0.23\%\\
+            \textbf{08}&      7.95\%
+        \end{tabular}
+    \end{subtable}
+    \begin{subtable}[h]{0.3\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 13}}\\\hline
+            SHIFT & IOC\\\hline
+            01 &      0.00\%\\
+            02 &      0.23\%\\
+            03 &      0.00\%\\
+            04 &      0.45\%\\
+            05 &      0.23\%\\
+            06 &      0.00\%\\
+            07 &      0.23\%\\
+            08 &      0.23\%\\
+            09 &      0.00\%\\
+            10 &      0.00\%\\
+            11 &      0.68\%\\
+            12 &      0.23\%\\
+            \textbf{13} &      7.69\%
+        \end{tabular}
+    \end{subtable}
+    \begin{subtable}[h]{0.3\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 19}}\\\hline
+            SHIFT & IOC\\\hline
+            01&      0.46\%\\
+            02&      0.00\%\\
+            03&      0.23\%\\
+            04&      0.69\%\\
+            05&      0.23\%\\
+            06&      0.23\%\\
+            07&      0.23\%\\
+            08&      0.23\%\\
+            09&      0.00\%\\
+            10&      0.23\%\\
+            11&      0.46\%\\
+            12&      0.00\%\\
+            13&      0.23\%\\
+            14&      0.46\%\\
+            15&      0.23\%\\
+            16&      0.00\%\\
+            17&      0.23\%\\
+            18&      0.00\%\\
+            \textbf{19}&      6.64\%
+        \end{tabular}
+    \end{subtable}
+    \caption{IOC Werte für unterschiedliche Keylängen, bei unterschiedliche Shifts}
+    \label{tab:CC_result_1}
+\end{table}\newline
+Verwendet man einen kürzeren Plaintext, hat das Verfahren nicht bei jeder Schlüssellänge funktioniert.
+Es sind nicht genug Werte vorhanden, um den IOC ausreichend an den Schwellwert anzunähern. Manchmal wurde
+nur ein Vielfaches der Schlüssellänge erkannt, oder kein Wert hat den Schwellwert erreicht.\vspace*{1em}\newline
+\textbf{Plaintext}: \textit{Wird nicht ein kurzer repetitiver Schluessel verwendet sondern einer der
+die gleiche Laenge aufweist wie der Plaintext, spricht man von OTP
+Verschluesselung"} (siehe Tabelle \ref{tab:CC_result_2})
+\begin{table}[h]
+    \begin{subtable}[t]{0.25\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 8}}\\\hline
+            SHIFT & IOC\\\hline
+            01&      0.62\%\\
+            02&      0.00\%\\
+            03&      0.00\%\\
+            04&      0.62\%\\
+            05&      0.00\%\\
+            06&      0.62\%\\
+            07&      0.00\%\\
+            \textbf{08}&      8.12\%
+        \end{tabular}
+        \caption{Schlüssellänge konnte richtig identifiziert werden.}
+    \end{subtable}
+    \hfill
+    \begin{subtable}[h]{0.25\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 12}}\\\hline
+            SHIFT & IOC\\\hline
+            01&      0.00\%\\
+            02&      0.60\%\\
+            03&      1.79\%\\
+            04&      0.60\%\\
+            05&      0.60\%\\
+            06&      0.60\%\\
+            07&      1.19\%\\
+            08&      1.19\%\\
+            09&      1.19\%\\
+            10&      0.00\%\\
+            11&      0.00\%\\
+            \textbf{12}&      5.95\%\\
+            13&      0.60\%\\
+            14&      0.00\%\\
+            15&      0.00\%\\
+            16&      1.19\%\\
+            17&      0.60\%\\
+            18&      0.60\%\\
+            19&      0.00\%\\
+            20&      0.60\%\\
+            21&      0.60\%\\
+            22&      0.60\%\\
+            23&      0.60\%\\
+            24&      7.74\%
+        \end{tabular}
+        \subcaption{Schlüssellänge wurde als ein Vielfaches der richtigen Länge identifiziert.}
+    \end{subtable}
+    \hfill
+    \begin{subtable}[h]{0.25\textwidth}
+        \centering
+        \begin{tabular}{c|c}
+            \multicolumn{2}{l}{\textbf{Keylength: 19}}\\\hline
+            SHIFT & IOC\\\hline
+            01&      0.58\%\\
+            02&      0.58\%\\
+            03&      0.00\%\\
+            04&      0.00\%\\
+            05&      0.58\%\\
+            06&      0.58\%\\
+            07&      0.00\%\\
+            08&      0.00\%\\
+            09&      1.17\%\\
+            10&      1.17\%\\
+            11&      0.00\%\\
+            12&      0.00\%\\
+            13&      0.00\%\\
+            14&      0.00\%\\
+            15&      0.00\%\\
+            16&      0.00\%\\
+            17&      0.58\%\\
+            18&      0.00\%\\
+            \textbf{19}&      4.68\%\\
+            20&      0.58\%\\
+            $\vdots$ & $\vdots$\\
+            168&     0.00\%\\
+            169&     0.58\%\\
+            170&     0.58\%
+        \end{tabular}
+        \subcaption{Schlüssellänge konnte nicht gefunden werden}
+    \end{subtable}
+    \caption{Zweites Experiment mit kürzerem Text. Nicht jede Schlüssellänge wird richtig erkannt.}
+    \label{tab:CC_result_2}
+\end{table}
+\subsection{Fazit}
+Sofern ausreichend Text vorhanden ist, bietet die Counting Coincidences Methode einen guten Weg um die Schlüssellänge
+zu bestimmen. Falls der Text zu kurz ist, enstehen falsche Ergebnisse, die entweder ein Vielfaches der richtigen Länge sind,
+oder den Schlüssel gleich lang wie den Text schätzen.

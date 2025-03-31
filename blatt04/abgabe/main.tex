@@ -13,6 +13,10 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 
+\usepackage{pdflscape}
+\usepackage{caption}
+\usepackage{subcaption}
+
 % Generate external pdf and import
 \pgfplotsset{width=9cm,compat=1.9}
 
@@ -30,10 +34,11 @@
     \fancyfoot[R]{\thepage}
     \maketitle
     \tableofcontents
+    \newpage
 
-    \input{aufgaben/a14.tex}
-    \input{aufgaben/a15.tex}
-    \input{aufgaben/a16.tex}
+    \input{aufgaben/a14.tex}\newpage
+    \input{aufgaben/a15.tex}\newpage
+    \input{aufgaben/a16.tex}\newpage
     \input{aufgaben/zeitaufwand.tex}
 
 \end{document}

@@ -1,13 +1,11 @@
 use rand::{Rng, rng};
 
 fn main() {
-    let plain = "Methode von Kasiski: Identische sich wiederholdende Teile des Plaintexts ge-XORed mit dem gleichen Teil des Keys ergeben sich
-wiederholende identische Ciphertext Teile. Die Groesse des Shifts
-zwischen dem Beginn solcher sich wiederholenden Teile im
-Ciphertext sollte daher ein Vielfaches der Key-Laenge sein. Die
-Analyse der gemeinsamen Faktoren dieser Shifts identifiziert den
-haeufigsten Faktor der dann der Key-laenge entspricht.";
-    let key = generate_key(7);
+    let plain = "Wird nicht ein kurzer repetitiver Schluessel verwendet sondern einer der
+die gleiche Laenge aufweist wie der Plaintext, spricht man von OTP
+Verschluesselung";
+    //let plain = &"X".repeat(35);
+    let key = generate_key(2);
     let cipher = short_key_xor(plain, &key);
 
     println!("Plaintext ({}):\t{}", plain.len(), plain);
@@ -37,8 +35,7 @@ fn counting_coincidences(text: &[u8]) -> usize {
         let same_bytes = text
             .iter()
             .zip(text.iter().chain(text).skip(offset))
-            .map(|(&a, &b)| a ^ b == 0)
-            .filter(|&b| b)
+            .filter(|&(a, b)| a == b)
             .count() as f32
             / text.len() as f32;
         println!("{:02}\t{:.2}%", offset, same_bytes * 100.0);

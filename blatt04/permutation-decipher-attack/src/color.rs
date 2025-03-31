@@ -1,12 +1,12 @@
 pub fn euclidean_distance(color1: &[u8], color2: &[u8]) -> f32 {
     assert_eq!(color1.len(), color2.len());
-    color1
+    let diff = color1
         .iter()
         .zip(color2.iter())
-        .map(|(c1, c2)| (*c1 as i32, *c2 as i32))
-        .map(|(c1, c2)| ((c1 - c2) * (c1 - c2)) as f32)
-        .sum::<f32>()
-        .sqrt()
+        .map(|(&x, &y)| (x as i32 - y as i32).abs())
+        .sum::<i32>();
+
+    diff as f32 / (color1.len() * 4 * 255) as f32
 }
 
 #[cfg(test)]

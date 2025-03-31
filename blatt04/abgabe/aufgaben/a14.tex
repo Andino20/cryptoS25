@@ -1,5 +1,39 @@
 \section{Aufgabe 14}
-    \textit{Erklären sie das Fuzzy Vault Scheme zur Erzeugung von kryptographischen Schl¨usseln
-    aus biometrischen Messungen. Wann muss dieses Verfahren verwendet werden anstelle
-    des Fuzzy Commitment Schemes?}\vspace*{1em}\newline
-    Antwort.
+\textit{Erklären sie das Fuzzy Vault Scheme zur Erzeugung von kryptographischen Schlüsseln
+aus biometrischen Messungen. Wann muss dieses Verfahren verwendet werden anstelle
+des Fuzzy Commitment Schemes?}\vspace*{1em}\newline
+Das Fuzzy Vault Scheme ist ein kryptographisches Verfahren, um Schlüssel mit unscharfen biometrischen Daten 
+zu schützen. Im Gegensatz zu klassischer Verschlüsselung, die exakte Eingaben erfordert, 
+erlaubt dieses Schema kleine Abweichungen, z.B wenn ein Fingerabdruck-Sensor bei jedem Scan leicht 
+unterschiedliche Merkmale erfasst. Das Verfahren ist wie das Fuzzy Commitment Scheme (FCS) in zwei Stufen unterteilt,
+der Registrierungs (Enrollment) und der Verifikation. Wie beim Fuzzy Commitment Scheme (FCS) wird während der Registrierung 
+ein geheimer Schlüssel generiert und anschließend mit einem fehlerkorrigierenden Code (z. B. Reed-Solomon oder BCH-Code) 
+kodiert, um Toleranz gegenüber leichten Abweichungen in den biometrischen Daten zu ermöglichen. Der Code wird als
+Polynom kodiert. Beispielsweise würde der Code $7283$ zu einem Polynom mit Grad $3$ werden:
+\[
+    7283 \longrightarrow p(x)=7x^3 + 2x^2 + 8x^1 + 3
+\]
+Die biometrischen Merkmale (z.B. Minutien bei Fingerabdrücke) werden als eine Menge $\{x_1,x_2,\dots\}$ von Messpunkten erfasst. Da es
+sich um eine Menge handelt, ist die Reihenfolge in der die Daten erfasst werden egal.
+Jeder Messpunkt wird nun in das geheime Polynom eingesetzt, um Messpunkt-Ergebnis-Paare zu erhalten.
+\[
+    \{(x_1, p(x_1)),\ (x_2, p(x_2)),\ \dots\}
+\]
+Jedes Paar beschreibt einen Punkt auf der Kurve des Polynoms. Zuletzt werden die Punkte um "`falsche"' Punkte (Chaff-Points)
+ergänzt. Dadurch kann ein Angreifer das Polynom nicht rekonstruieren, da ihm nicht bekannt ist, welche Punkte 
+echte Messpunkte waren. Die Kombination aus den Polynompunkten und den Chaff-Points (auch \textit{Vault} $V$ genannt) wird
+gespeichert.
+\[
+    V = \{(x_1, p(x_1)),\ (x_2, p(x_2)),\ \dots\}\cup \text{Chaff-Points}
+\]
+Bei der Verifikation werden wieder biometrische Messpunkte erfasst. Diese werden mit $V$ verglichen,
+um die Chaff-Points herauszufiltern. Sofern die Daten nah genug an den ursprünglichen sind, kann 
+das Polynom rekonstruiert werden. Aus dem Polynom leitet sich dann der Schlüssel ab.
+\subsection{FCS vs. FVS}
+Da das Fuzzy Vault Scheme mit Messpunkt-Mengen arbeitet, ist die Reihenfolge in der die Punkte gemessen werden
+egal. Außerdem ist das FVS unempfindlich gegen das Hinzufügen oder Löschen von Datenpunkten (hohe Rauschtoleranz). 
+Daher eignet es sich gut für die Verifikation über Fingermerkmale oder Gesichtserkennung. Chaff-Points bieten außerdem einen starken Schutz gegen
+Brute-Force-Angriffe. FVS wird also vorallem dann eingesetzt, wenn ein hohes Sicherheitsmaß notwendig ist. 
+Das Fuzzy Commitment Scheme ist besonders geeignet, wenn die Messdaten als Bitstring vorliegen, wie es bei Iris-Codes 
+oder binär extrahierten Fingerabdruck-Merkmalen der Fall ist. Das FCS ist außerdem simpler und effizient,
+wenn einfache fehlerkorrigierende Codes ausreichen.

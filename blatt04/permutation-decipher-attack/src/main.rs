@@ -1,4 +1,4 @@
-use image::RgbaImage;
+use image::{Pixel, Rgba, RgbaImage};
 use std::time::Instant;
 
 mod color;
@@ -13,7 +13,7 @@ fn main() -> std::io::Result<()> {
         let start = Instant::now();
         print!("Decrypting {filename}...");
         let cipher_image = image::open(&path).expect("Failed to open image");
-        decipher(cipher_image.to_rgba8())
+        decipher(&cipher_image.to_rgba8())
             .save(format!("../img/decipher/{filename}"))
             .unwrap();
         let duration = start.elapsed();
@@ -23,36 +23,33 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn decipher(mut img: RgbaImage) -> RgbaImage {
-    let (width, height) = img.dimensions();
-    let mut pixels = img.as_flat_samples_mut();
-    let raw = pixels.as_mut_slice();
-    let bpr = (width * 4) as usize;
+fn decipher(img: &RgbaImage) -> RgbaImage {
+    let mut rows = img
+        .rows()
+        .map(|pixels| pixels.collect::<_>())
+        .collect::<Vec<_>>();
 
-    for current_row in 0..height - 1 {
-        let row1_start = (current_row * width * 4) as usize;
-        let (best_row, _) = (current_row + 1..height)
-            .map(|r| {
-                let row2_start = (r * width * 4) as usize;
-                let score = similarity_score(
-                    &raw[row1_start..row1_start + bpr],
-                    &raw[row2_start..row2_start + bpr],
-                );
-                (row2_start, score)
-            })
-            .min_by(|(_, s1), (_, s2)| s1.partial_cmp(s2).unwrap())
-            .unwrap();
-
-        for i in 0..(width as usize * 4) {
-            raw.swap(((current_row + 1) * width * 4) as usize + i, best_row + i);
+    for i in 0..img.height() as usize - 1 {
+        if let Some(best_match) = nearest_neighbour(i, &rows) {
+            rows.swap(i + 1, best_match);
         }
     }
-    img
+
+    RgbaImage::from_fn(img.width(), img.height(), |x, y| {
+        *rows[y as usize][x as usize]
+    })
 }
 
-fn similarity_score(row1: &[u8], row2: &[u8]) -> f32 {
-    row1.chunks(4)
-        .zip(row2.chunks(4))
-        .map(|(chunk1, chunk2)| color::euclidean_distance(chunk1, chunk2))
-        .sum::<f32>()
+fn nearest_neighbour(start: usize, rows: &[Vec<&Rgba<u8>>]) -> Option<usize> {
+    let (result, _) = (start + 1..rows.len())
+        .map(|r| (r, similarity(&rows[r], &rows[start])))
+        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())?;
+    Some(result)
+}
+
+fn similarity(r1: &[&Rgba<u8>], r2: &[&Rgba<u8>]) -> f32 {
+    r1.iter()
+        .zip(r2.iter())
+        .map(|(&a, &b)| color::euclidean_distance(a.channels(), b.channels()))
+        .sum()
 }
