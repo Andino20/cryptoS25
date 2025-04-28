@@ -1,0 +1,35 @@
+\section{Aufgabe 20}
+\textit{An welcher Stelle des Protokollangriffs gegen digitale Empfangsbestätigungen
+ist tatsächlich die Bedingung }
+\[
+    V_x = E_x\qquad S_x = D_x
+\]
+\textit{für den Erfolg notwendig? Warum funktioniert das ohne diese Bedingung nicht?}
+\vspace*{1em}\newline
+Nachdem Mallory die Nachricht von Alice abgefangen hat besitzt er $E_B(S_A(m))$.
+Wenn Mallory nun die Nachricht an Bob schickt und vorgibt der Urheber zu sein,
+entschlüsselt und überprüft Bob die Nachricht. Er erstellt
+\[
+    V_M(D_B(E_B(S_A(m))))
+\]
+An dieser Stelle "`entfernt"' Bob sich aus der Gleichung, da sich $D_B(E_B(\dots))$
+aufheben. Es bleibt $V_M(S_A(m))$. Wird nun der gleiche Algorithmus zur Signatur/Verifikation
+und zur Ver- und Entschlüsselung verwendet gilt $V_M = E_M$. 
+Somit hätte Bob eigentlich $E_M(S_A(m))$. Anschließend schickt Bob die 
+signierte Empfangsbestätigung an Mallory.
+\[
+    V_M(S_B(E_M(S_A(m)))) = E_M(S_B(E_M(S_A(m))))
+\]
+Mallory kann ohne Schwierigkeiten $E_M(\dots)$ durch $D_M(E_M(\dots))$ entfernen.
+Es bleibt 
+\[
+    S_B(E_M(S_A(m)))
+.\]
+Aufgrund der Bedingung $S_x = D_x$ ist eine Signatur gleich einer Entschlüsselung mit
+dem Privaten Schlüssel.
+\[
+    S_B(E_M(S_A(m))) = D_B(E_M(D_A(m)))
+\]
+Mallory kann nun wie in der VO beschrieben zuerst den Public Key von Bob zur Verschlüsselung,
+dann seinen Private Key zur Entschlüsselung und zuletzt den Public Key von Alice verwenden, um
+die Nachricht $m$ zu erhalten.

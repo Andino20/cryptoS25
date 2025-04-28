@@ -1,0 +1,43 @@
+\section{Aufgabe 19}
+\textit{Leiten Sie die kombinatorischen Werte des Geburtstags-Paradoxons her.}
+\paragraph{1. } Wie viele Menschen müssen in einem Raum sein, damit die Wahrscheinlichkeit
+größer $\nicefrac{1}{2}$, dass eine oder mehr Personen an einem vorgegebene
+Tag Geburtstags haben?\vspace*{1em}\newline
+Sei $k$ die Anzahl der Personen in einem Raum. Wir betrachten das Gegenereignis, dass von den $k$
+Menschen keiner an dem vorgegebenen Tag Geburtstag hat. Das heißt an einem der anderen 364 Tage.
+\begin{gather*}    
+    \text{\# günstige Fälle} = 364^k\\
+    \text{\# mögliche Fälle} = 365^k
+\end{gather*}
+Sei $X$ eine Zufallszahl, die beschreibt wie viele von $k$ möglichen Menschen an einem vorgegebenen
+Tag Geburtstags haben.
+\begin{align*}    
+    P(X\ge 1) &= 1 - P(X=0) = 1 - \left(\frac{364}{365}\right)^k\\
+    0.5 &= 1 - \left(\frac{364}{365}\right)^k\\
+    \ln0.5 &= \ln\left(\frac{364}{365}\right)^k= k\cdot \ln\left(\frac{364}{365}\right)\\
+    k &= \frac{\ln 0.5}{\ln \frac{364}{365}} = 252.652
+\end{align*}
+Also ab 253 Personen wäre die Wahrscheinlichkeit, dass zumindest eine Person an einem
+vorgegebenen Tag Geburtstag hat größer \nicefrac{1}{2}.
+\paragraph{2. } Wie viele Menschen müssen in einem Raum sein,
+damit die Wahrscheinlichkeit größer \nicefrac{1}{2} ist, dass zwei
+Personen am gleichen Tag Geburtstag haben?\vspace*{1em}\newline
+Wir betrachten das Gegenereignis, dass keine zwei der $k$ Personen am gleichen Tag 
+Geburtstag haben. Die Anzahl der günstigen Fälle ergibt sich wie folgt:
+\[
+    \text{\# günstige Fälle} = 365\cdot 364\cdot 363\cdots (365 - k + 1) = \prod_{i = 0}^{k - 1} (365 - i).
+\]
+Die Gesamtanzahl der möglichen Kombination ist
+\[
+    \text{\# mögliche Fälle} = 365^k.
+\]
+Dadurch erhalten wir die Wahrscheinlichkeit, dass alle Personen an unterschiedlichen Tagen
+Geburtstag haben.
+\[
+    P(\text{alle unterschiedlich}) = \frac{\prod_{i = 0}^{k - 1} (365 - i)}{365^k} = \prod_{i = 0}^{k - 1} \frac{365 - i}{365}
+\]
+Die gesuchte Wahrscheinlichkeit, dass bei $k$ Personen zwei oder mehr am gleichen Tag haben ist dann
+\[
+    P(\text{zwei oder mehr gleiche}) = 1 - P(\text{alle unterschiedlich}).
+\]
+Durch numerische Auswertung für verschiedene $k$ erhält man ein Ergebnis $> 0.5$ bei $k = 23$.

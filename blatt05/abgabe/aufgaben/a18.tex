@@ -1,0 +1,46 @@
+\section{Aufgabe 18}
+
+\textit{Fortsetzung Aufgabe 11.): Führen sie eine Known Plaintext Attacke gegen den in
+Aufgabe 11.) implementierten Cipher durch und ermitteln sie aus den erzeugten
+Daten automatisch den für z verwendeten Wert}
+\vspace*{1em}\newline
+Im Gegensatz zur vorherigen Aufgabe steht ein fester, bekannter Klartext zur Verfügung, welcher in einer „Black-Box“ verschlüsselt wird. Die Verschlüsselung erfolgt intern mit einem zufällig gewählten Schlüssel.
+\begin{verbatim}
+let plain = "World";
+let cipher = black_box(plain);
+\end{verbatim}
+Die Funktion \texttt{black\_box} nimmt einen Klartext entgegen, generiert intern einen zufälligen Schlüssel im Bereich $[0, 25]$ und verschlüsselt den Text mit der Caesar-Chiffre:
+\begin{verbatim}
+fn black_box(plain: &str) -> String {
+    let key = rng().random_range(0..26);
+    caesar_cipher(plain, key) // Implementierung aus Aufgabe 11
+}
+\end{verbatim}
+Ein Beispielversuch mit dieser Methode ergibt folgendes Klartext-Ciphertext-Paar:
+\begin{verbatim}
+Secret Key:     9
+Plain:          World
+Cipher:         Fxaum
+\end{verbatim}
+Da es sich bei der Caesar-Verschlüsselung um eine monoalphabetische Substitution mit fester Verschiebung handelt, genügt es, die Differenz eines Buchstabenpaares (aus Plain- und Ciphertext) zu berechnen, um den verwendeten Schlüssel zu ermitteln.
+Seien $P$ der numerische Wert eines Buchstabens aus dem Klartext und $C$ der entsprechende Wert im Geheimtext. Der Schlüssel $S$ ergibt sich dann durch:
+\[
+S = (C - P) \bmod 26
+\]
+In der Praxis kann diese Berechnung beispielsweise durch Vergleich des ersten Buchstabenpaares durchgeführt werden:
+\begin{verbatim}
+let c1 = plain.chars().nth(0).unwrap() as i8;
+let c2 = cipher.chars().nth(0).unwrap() as i8;
+let key = (c2 - c1).rem_euclid(26);
+\end{verbatim}
+Wendet man dieses Verfahren auf das obige Beispiel an, so ergibt sich:
+\begin{verbatim}
+Secret Key:     9
+Plain:          World
+Cipher:         Fxaum
+Calculated Key: 9
+\end{verbatim}
+
+\subsection*{Fazit}
+Ein Known-Plaintext-Angriff auf eine Caesar-Verschlüsselung lässt sich mit minimalem Aufwand erfolgreich durchführen. 
+Bereits ein einziges Zeichenpaar reicht aus, um den verwendeten Schlüssel eindeutig zu rekonstruieren.
