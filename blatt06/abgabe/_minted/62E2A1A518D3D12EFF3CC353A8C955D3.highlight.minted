@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{a}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fs}\PYG{p}{::}\PYG{n}{read}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{./documents/mietvertrag\PYGZus{}original.pdf}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{?}\PYG{p}{;}
+\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{b}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{fs}\PYG{p}{::}\PYG{n}{read}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{./documents/mietvertrag\PYGZus{}changed.pdf}\PYG{l+s}{\PYGZdq{}}\PYG{p}{)}\PYG{o}{?}\PYG{p}{;}
+\end{MintedVerbatim}

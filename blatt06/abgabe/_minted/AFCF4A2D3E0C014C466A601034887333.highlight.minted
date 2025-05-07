@@ -1,0 +1,7 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{for}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{o}{..}\PYG{k+kt}{u32}\PYG{p}{::}\PYG{n}{MAX}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{n}{a}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{o}{..}\PYG{l+m+mi}{11}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{.}\PYG{n}{copy\PYGZus{}from\PYGZus{}slice}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{i}\PYG{p}{.}\PYG{n}{to\PYGZus{}be\PYGZus{}bytes}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{b}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{o}{..}\PYG{l+m+mi}{11}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{.}\PYG{n}{copy\PYGZus{}from\PYGZus{}slice}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{i}\PYG{p}{.}\PYG{n}{to\PYGZus{}be\PYGZus{}bytes}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{c+c1}{// ...}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

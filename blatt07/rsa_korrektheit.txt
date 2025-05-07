@@ -1,0 +1,8 @@
+c^d = m^{e*d} mod n
+    = m^1 mod n        | stimmt nicht weil nur für mod (p-1)(q-1)
+    = m mod n          | falsch!!!
+
+Man braucht den kleinen Fermat für den Beweis.
+
+Jedes deterministisches Public-Private Key Verfahren ist nicht IND-CPA sicher,
+weil der public key bekannt ist

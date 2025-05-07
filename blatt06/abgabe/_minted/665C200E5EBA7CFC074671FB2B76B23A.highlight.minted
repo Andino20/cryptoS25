@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{a\PYGZus{}map}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{HashMap}\PYG{o}{\PYGZlt{}}\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{;}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{u32}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{HashMap}\PYG{p}{::}\PYG{n}{new}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{b\PYGZus{}map}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{HashMap}\PYG{o}{\PYGZlt{}}\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{;}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{,}\PYG{+w}{ }\PYG{k+kt}{u32}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{HashMap}\PYG{p}{::}\PYG{n}{new}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\end{MintedVerbatim}

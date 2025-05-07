@@ -1,0 +1,7 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n+nb}{Some}\PYG{p}{(}\PYG{n}{modification}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{a\PYGZus{}map}\PYG{p}{.}\PYG{n}{get}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{b\PYGZus{}digest}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n+nf+fm}{println!}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s}{Found Collision! \PYGZob{}:?\PYGZcb{}}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{modification}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{a}\PYG{p}{[}\PYG{l+m+mi}{11}\PYG{o}{..}\PYG{l+m+mi}{11}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{.}\PYG{n}{copy\PYGZus{}from\PYGZus{}slice}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{modification}\PYG{p}{.}\PYG{n}{to\PYGZus{}be\PYGZus{}bytes}\PYG{p}{(}\PYG{p}{)}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{break}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

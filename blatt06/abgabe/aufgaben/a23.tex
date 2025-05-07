@@ -1,0 +1,132 @@
+\newaufgabe{Führen sie eine Geburtstagsattacke (beschrieben auf S. 87 der VO-Slides) 
+durch: Erstellen sie zwei semantisch unterschiedliche Dokumente (wie im besprochenen
+Beispiel die beiden unterschiedlichen Mietverträge) im Format ihrer Wahl (Word,
+Postscript, etc.), und modifizieren sie beide Varianten Semantik-erhaltend automatisiert 
+(beschreiben sie das detailliert, wie sie dabei vorgehen), bis sie auf zwei Varianten 
+mit dem gleichen hash-Wert treffen (verwenden sie dafür die eigentlich obsolete
+Hashfunktion MD5).}
+Die Idee einer Geburtstagsattacke besteht darin, zwei inhaltlich unterschiedliche 
+Dokumente zu erzeugen, die denselben Hashwert besitzen, sodass eine Manipulation 
+unentdeckt bleibt.Als Demonstrationsbeispiel dienen zwei Mietverträge im PDF-Format. 
+Das erste Dokument ist ein regulärer Vertrag mit einer monatlichen Mietzahlung von 
+850,00\,€. Das zweite Dokument unterscheidet sich lediglich in einem 
+zentralen Punkt: Die monatliche Miete beträgt hier 20.000,00\,€.
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/miete_org}
+        \caption{Originales Dokument}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/miete_chg}
+        \caption{Verändertes Dokument}
+    \end{subfigure}
+    \caption{Ausschnitte aus den Mietverträgen mit Mietzins}
+    \label{fig:mietvertraege}
+\end{figure}
+Abgesehen von dieser Änderung sind beide Dokumente identisch aufgebaut.
+Ziel ist es, die beiden PDF-Dateien semantisch konsistent zu halten, während 
+im Hintergrund so modifiziert wird, dass beide Dateien denselben MD5-Hashwert aufweisen.
+\paragraph{Technische Umsetzung} Die MD5-Hashfunktion (Message-Digest Algorithm 5) berechnet aus einer beliebigen 
+Eingabe einen 128-Bit langen Hashwert. Aufgrund des enormen Wertebereichs 
+von $2^{128}$ wäre eine Kollision durch bloßes Probieren sehr aufwendig. Daher wird 
+in dieser Demonstration auf eine vereinfachte Variante zurückgegriffen (Short-MD5),
+bei der lediglich ein 4 Byte (32 Bit) Präfix  
+der echten MD5-Hashwerte verglichen wird.
+Zur Manipulation der Dateien wird deren Binärstruktur direkt verändert. 
+PDF-Dateien beginnen mit einem Header, dem in der Regel Zeilenkommentare 
+folgen können, die keine Auswirkungen auf den Inhalt des Dokuments haben. Diese 
+Kommentare werden genutzt, um gezielt die Bytefolge zu beeinflussen:
+\begin{verbatim}
+%PDF-1.7
+% XXXX <- Zeilenkommentar
+...
+\end{verbatim}
+An dieser Stelle wird in beiden Dokumenten ein identischer Kommentarblock eingefügt. 
+Durch automatisierte, systematische Änderungen dieses Kommentarinhalts werden 
+unterschiedliche Bytefolgen erzeugt. Nach jeder Änderung wird der Hashwert berechnet 
+und mit den bisherigen Einträgen verglichen. Sobald eine identische 32-Bit-Kennung 
+bei beiden Dokumenten festgestellt wird, wurde eine Kollision entdeckt.
+\paragraph{Code} Für die Automatisierung wurde die Programmiersprache Rust verwendet.
+Zur Berechnung des verkürzten MD5-Hashs dient die Funktion \verb|short_md5|.
+Dabei wird lediglich der vollständige MD5-Hash der Daten errechnet und auf die
+vordersten vier Bytes reduziert.
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines, linenos]{rust}
+fn short_md5<T: AsRef<[u8]>>(data: T) -> [u8; 4] {
+    let digest = md5::compute(data).0; // 16 Bytes
+    digest[..4].try_into().unwrap()    // 4 Bytes
+} 
+\end{minted}
+Für die Kollisionssuche werden die zwei Dokumente $A$ und $B$ zuerst aus dem Speicher geladen und als 
+Array von Bytes gespeichert.
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines]{rust}
+let mut a = fs::read("./documents/mietvertrag_original.pdf")?;
+let mut b = fs::read("./documents/mietvertrag_changed.pdf")?;
+\end{minted}
+Zur Speicherung der bereits entdeckten Hashwerte wird eine HashMap verwendet, mit
+den 4 Byte Hashes als Key und den dazugehörigen Änderungen des Dokuments als Values.
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines]{rust}
+let mut a_map: HashMap<[u8; 4], u32> = HashMap::new();
+let mut b_map: HashMap<[u8; 4], u32> = HashMap::new();
+\end{minted}
+Innerhalb der PDF-Dokumente wurde wie erwähnt ein Zeilenkommentar mit 'XXXX' als 
+Platzhalter eingefügt. Die vier Zeichen entsprechen genau vier Bytes und somit einem
+\verb|unsigned integer|. Das erste 'X' ist in diesem Fall das elfte Byte der beiden Dokumente.
+Um alle möglichen Varianten systematisch durchzugehen, wird von $0\dots 2^{32} - 1$ iteriert
+und die binäre Darstellung der Dezimalzahl statt dem Platzhalter in beide Dokumente eingefügt.
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines]{rust}
+for i in 0..u32::MAX {
+    a[11..11 + 4].copy_from_slice(&i.to_be_bytes());
+    b[11..11 + 4].copy_from_slice(&i.to_be_bytes());
+    // ...
+}
+\end{minted}
+Nach der Änderung des Platzhalters wird der Short-MD5 Hash der beiden Dokumente
+berechnet.
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines]{rust}
+    let a_digest = short_md5(&a);
+    let b_digest = short_md5(&b);
+\end{minted}
+Jetzt wird in den HashMaps nach den neuen Hashwerten gesucht. Falls einer der
+Werte bereits in der HashMap des anderen Dokuments ist, so wurde eine Kollision entdeckt.
+Dann kann das Dokument mit dem Wert, der den gleichen Hash erzeugt hat, aus der
+HashMap verändert werden. Sei beispielweise der neue Hashwert von Dokument $B$ bereits
+in der HashMap von Dokument $A$ (selbiges in die andere Richtung):
+\begin{minted}[fontsize=\small, bgcolor=bg, frame=lines]{rust}
+    if let Some(modification) = a_map.get(&b_digest) {
+        println!("Found Collision! {:?}", modification);
+        a[11..11 + 4].copy_from_slice(&modification.to_be_bytes());
+        break;
+    }
+\end{minted}
+\paragraph{Ergebnis}
+Durch den Algorithmus konnten die beiden Dokumente so angepasst werden, dass der
+gleiche Short-MD5 Hashwert nach ungefähr 87000 Iterationen ($\approx 20,5$ ms) entsteht.
+\begin{verbatim}
+                (Short-MD5)     (MD5-Rest)
+Original:       7bd80b59        fa50ae16acf3770f74bd6a69
+Changed:        7bd80b59        db7b3913e7de464f993a2db9
+\end{verbatim}
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/org_adjusted}
+        \caption{Originales Dokument mit angepassten Platzhalter}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{img/chg_adjusted}
+        \caption{Verändertes Dokument mit angepassten Platzhalter}
+    \end{subfigure}
+    \caption{Ausschnitte aus der Textrepräsentation der beiden veränderten Dokumente}
+    \label{fig:adjusted_mietvertraege}
+\end{figure}
+\paragraph{Fazit}
+Aufgrund des Geburtstagsparadoxon lassen sich bei der vereinfachten MD5 Variante
+schnell zwei gleiche Hashwerte für die Dokumente finden. Für die volle Länge
+von MD5 Hashwerten würde die Suche allerdings beträchtlich länger dauern. 

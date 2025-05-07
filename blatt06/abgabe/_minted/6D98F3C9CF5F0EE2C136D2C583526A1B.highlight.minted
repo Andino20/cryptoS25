@@ -1,0 +1,6 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{fn}\PYG{+w}{ }\PYG{n+nf}{short\PYGZus{}md5}\PYG{o}{\PYGZlt{}}\PYG{n}{T}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nb}{AsRef}\PYG{o}{\PYGZlt{}}\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{]}\PYG{o}{\PYGZgt{}}\PYG{o}{\PYGZgt{}}\PYG{p}{(}\PYG{n}{data}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{T}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{;}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{digest}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{md5}\PYG{p}{::}\PYG{n}{compute}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}\PYG{p}{.}\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{ }\PYG{c+c1}{// 16 Bytes}
+\PYG{+w}{    }\PYG{n}{digest}\PYG{p}{[}\PYG{o}{..}\PYG{l+m+mi}{4}\PYG{p}{]}\PYG{p}{.}\PYG{n}{try\PYGZus{}into}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n}{unwrap}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{    }\PYG{c+c1}{// 4 Bytes}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

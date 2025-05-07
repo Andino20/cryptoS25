@@ -1,0 +1,41 @@
+\newaufgabe{Fortsetzung Aufgabe 20.): Erklären sie, warum die Verwendung von Hashfunktionen
+im Kontext mit digitalen Signaturen die Protokollattacke gegen digitale Empfangsbestätigungen verunmöglicht. Bedenken sie dabei insbesondere, dass in diesem Fall
+NachrichtenHash und Nachricht übermittelt werden (die Fragen in Item 2 auf Skriptum S. 93 müssen bearbeitet werden).}
+Sei $m$ die Nachricht, die Alice an Bob übermitteln möchte. Alice verschlüsselt 
+die Nachricht mit Bobs öffentlichem Schlüssel und sendet ihm $E_B(m)$. 
+Zusätzlich erzeugt sie den Hashwert $h(m)$ mittels einer kryptografischen 
+One-Way-Hashfunktion, signiert diesen mit ihrem privaten Schlüssel und 
+verschlüsselt auch die Signatur mit Bobs öffentlichem Schlüssel:
+\[
+    \begin{rcases}
+        E_B(m)\\
+        E_B(S_A(h(m)))
+    \end{rcases}
+    \rightarrow \text{Bob}
+\]
+Bob entschlüsselt beide Nachrichtenkomponenten, extrahiert den Klartext $m$ 
+sowie die Signatur $S_A(h(m))$, und berechnet anschließend selbst den Hashwert 
+$h(m)$. Anschließend überprüft er die Signatur mit Alices öffentlichem Schlüssel. 
+Stimmen der berechnete Hash $h(m)$ und der signierte Hash überein, ist die 
+Integrität der Nachricht sichergestellt.
+
+Im Anschluss sendet Bob eine digitale Empfangsbestätigung zurück. Diese besteht 
+nicht aus einer Signatur der vollständigen Nachricht, sondern aus der Signatur 
+des Hashwerts:
+\[
+    E_A(S_B(h(m)))
+\]
+Eine Protokollattacke, wie sie in Aufgabe 20 beschrieben wurde, ist in diesem 
+Szenario nicht mehr möglich. Grund hierfür sind die 
+Eigenschaften der verwendeten Hashfunktion:
+\begin{itemize}
+    \item \textbf{Kollisionsresistenz:} Es ist praktisch nicht möglich, zwei verschiedene Nachrichten $m \neq m'$ zu finden, sodass $h(m) = h(m')$ gilt.
+    \item \textbf{Pre-Image-Resistenz:} Aus einem gegebenen Hashwert $h(m)$ kann keine gültige Nachricht $m$ rekonstruiert werden.
+\end{itemize}
+Selbst wenn Mallory die Nachrichtenkomponenten vom 
+ursprünglichen Protokollangriff kennt und in der Lage wäre, die Signaturen und 
+Verschlüsselungen zu trennen, fehlt ihm dennoch die Möglichkeit, aus dem Hashwert 
+$h(m)$ die Originalnachricht $m$ zu rekonstruieren oder eine alternative Nachricht 
+$m'$ mit demselben Hash zu erzeugen.
+Somit verhindert die Einbindung von One-Way-Hashfunktionen diese Art der 
+Attacken gegen digitale Empfangsbestätigungen.

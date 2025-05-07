@@ -1,0 +1,4 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{a\PYGZus{}digest}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{short\PYGZus{}md5}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{a}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{b\PYGZus{}digest}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{short\PYGZus{}md5}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{b}\PYG{p}{)}\PYG{p}{;}
+\end{MintedVerbatim}
