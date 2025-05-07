@@ -1,0 +1,11 @@
+[package]
+name = "aes_modes"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aes = "0.8.4"
+colog = "1.3.0"
+image = "0.25.6"
+log = "0.4.27"
+rand = "0.9.1"
