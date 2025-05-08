@@ -1,25 +1,32 @@
 use aes_modes::*;
 use image::{GrayImage, Luma};
+use log::info;
 use rand::{Rng, rng};
 
 fn main() {
     colog::init();
 
+    run_experiment(BlockCipherMode::ECM);
+    run_experiment(BlockCipherMode::CBC(generate_aes128_iv()));
+    run_experiment(BlockCipherMode::OFB(generate_aes128_iv(), 4));
+}
+
+fn run_experiment(m: BlockCipherMode) {
+    info!("Running experiment with {m}");
+
     let key = generate_aes128_key();
     let msg = [0x42; 64 * 64];
-    save(msg, "out/original.png");
 
-    let cipher = encrypt(msg, &key, BlockCipherMode::ECM);
-    save(&cipher, "out/output_ecm.png");
-
-    let iv = generate_aes128_iv();
-    let mut cipher = encrypt(msg, &key, BlockCipherMode::CBC(iv));
-    save(&cipher, "out/output_cbc.png");
+    let mut cipher = encrypt(msg, &key, m.clone());
+    save(&cipher, &format!("out/output_{}.png", m.short_name()));
 
     random_bit_error(&mut cipher);
 
-    let decipher = decrypt(cipher, &key, BlockCipherMode::CBC(iv));
-    save(&decipher, "out/output_cbc_decrypt.png");
+    let plain = decrypt(cipher, &key, m.clone());
+    save(
+        &plain,
+        &format!("out/output_{}_decrypt.png", m.short_name()),
+    );
 }
 
 fn save<T: AsRef<[u8]>>(data: T, filename: &str) {
