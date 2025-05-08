@@ -13,12 +13,12 @@ fn main() {
     save(&cipher, "out/output_ecm.png");
 
     let iv = generate_aes128_iv();
-    let mut cipher = encrypt(msg, &key, BlockCipherMode::CBC(iv.clone()));
+    let mut cipher = encrypt(msg, &key, BlockCipherMode::CBC(iv));
     save(&cipher, "out/output_cbc.png");
 
     random_bit_error(&mut cipher);
 
-    let decipher = decrypt(cipher, &key, BlockCipherMode::CBC(iv.clone()));
+    let decipher = decrypt(cipher, &key, BlockCipherMode::CBC(iv));
     save(&decipher, "out/output_cbc_decrypt.png");
 }
 
