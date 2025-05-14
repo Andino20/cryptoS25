@@ -1,0 +1,16 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{pub}\PYG{+w}{ }\PYG{k}{fn}\PYG{+w}{ }\PYG{n+nf}{encrypt}\PYG{o}{\PYGZlt{}}\PYG{n}{T}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nb}{AsRef}\PYG{o}{\PYGZlt{}}\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{]}\PYG{o}{\PYGZgt{}}\PYG{o}{\PYGZgt{}}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{msg}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{T}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{key}\PYG{p}{:}\PYG{+w}{ }\PYG{k+kp}{\PYGZam{}}\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{;}\PYG{+w}{ }\PYG{l+m+mi}{16}\PYG{p}{]}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{mode}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{BlockCipherMode}
+\PYG{+w}{    }\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n+nb}{Vec}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{u8}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{c+c1}{// ...}
+\PYG{+w}{    }\PYG{k}{match}\PYG{+w}{ }\PYG{n}{mode}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{n}{BlockCipherMode}\PYG{p}{::}\PYG{n}{ECM}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{\PYGZgt{}}
+\PYG{+w}{            }\PYG{n}{ecm}\PYG{p}{::}\PYG{n}{encrypt}\PYG{p}{(}\PYG{n}{msg}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Aes128}\PYG{p}{::}\PYG{n}{new}\PYG{p}{(}\PYG{n}{key}\PYG{p}{)}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{BlockCipherMode}\PYG{p}{::}\PYG{n}{CBC}\PYG{p}{(}\PYG{n}{iv}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{\PYGZgt{}}
+\PYG{+w}{            }\PYG{n}{cbc}\PYG{p}{::}\PYG{n}{encrypt}\PYG{p}{(}\PYG{n}{msg}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Aes128}\PYG{p}{::}\PYG{n}{new}\PYG{p}{(}\PYG{n}{key}\PYG{p}{)}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{iv}\PYG{p}{)}
+\PYG{+w}{        }\PYG{n}{\PYGZus{}}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{msg}\PYG{p}{,}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}

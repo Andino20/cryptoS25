@@ -10,20 +10,12 @@ pub mod benchmark;
 mod cipher {
     pub mod cbc;
     pub mod ecm;
-    pub mod ofb;
-}
-
-pub mod util {
-    pub mod queue;
 }
 
 #[derive(Clone)]
 pub enum BlockCipherMode {
     ECM,
     CBC([u8; 16]),
-    OFB([u8; 16], u32),
-    CFB,
-    CTR,
 }
 
 impl BlockCipherMode {
@@ -31,9 +23,6 @@ impl BlockCipherMode {
         match self {
             BlockCipherMode::ECM => "ECM",
             BlockCipherMode::CBC(_) => "CBC",
-            BlockCipherMode::OFB(_, _) => "OFB",
-            BlockCipherMode::CFB => "CFB",
-            BlockCipherMode::CTR => "CTR",
         }
     }
 }
@@ -43,16 +32,6 @@ impl Display for BlockCipherMode {
         match self {
             BlockCipherMode::ECM => write!(f, "ECM"),
             BlockCipherMode::CBC(iv) => write!(f, "CBC(IV: {})", hex::encode(iv)),
-            BlockCipherMode::OFB(iv, block_size) => {
-                write!(
-                    f,
-                    "OFB(IV: {}, Block Size: {} B)",
-                    hex::encode(iv),
-                    block_size
-                )
-            }
-            BlockCipherMode::CFB => write!(f, "CFB"),
-            BlockCipherMode::CTR => write!(f, "CTR"),
         }
     }
 }
@@ -75,11 +54,6 @@ pub fn encrypt<T: AsRef<[u8]>>(msg: T, key: &[u8; 16], mode: BlockCipherMode) ->
         BlockCipherMode::CBC(iv) => {
             let (cipher, duration) = time!(cbc::encrypt(msg, Aes128::new(key), iv));
             info!("Time elapsed encrypting (CBC): {} us", duration.as_micros());
-            cipher
-        },
-        BlockCipherMode::OFB(iv, block_size) => {
-            let (cipher, duration) = time!(ofb::encrypt(msg, Aes128::new(key), iv, block_size));
-            info!("Time elapsed encrypting (OFB): {} us", duration.as_micros());
             cipher
         }
         _ => msg,

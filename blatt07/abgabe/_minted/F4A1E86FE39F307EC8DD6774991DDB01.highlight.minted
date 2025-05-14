@@ -1,0 +1,21 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{pub}\PYG{+w}{ }\PYG{k}{fn}\PYG{+w}{ }\PYG{n+nf}{decrypt}\PYG{p}{(}\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{msg}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nb}{Vec}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{u8}\PYG{o}{\PYGZgt{}}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{cipher}\PYG{p}{:}\PYG{+w}{ }\PYG{n+nc}{Aes128}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{iv}\PYG{p}{:}\PYG{+w}{ }\PYG{p}{[}\PYG{k+kt}{u8}\PYG{p}{;}\PYG{+w}{ }\PYG{l+m+mi}{16}\PYG{p}{]}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n+nb}{Vec}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{u8}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{block\PYGZus{}iter}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{msg}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n}{chunks\PYGZus{}exact\PYGZus{}mut}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n}{map}\PYG{p}{(}\PYG{n}{GenericArray}\PYG{p}{:}\PYG{p}{:}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{u8}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{U16}\PYG{o}{\PYGZgt{}}\PYG{p}{::}\PYG{n}{from\PYGZus{}mut\PYGZus{}slice}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n}{rev}\PYG{p}{(}\PYG{p}{)}
+\PYG{+w}{        }\PYG{p}{.}\PYG{n}{peekable}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{k}{while}\PYG{+w}{ }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n+nb}{Some}\PYG{p}{(}\PYG{n}{block}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{block\PYGZus{}iter}\PYG{p}{.}\PYG{n}{next}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{prev}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{k}{match}\PYG{+w}{ }\PYG{n}{block\PYGZus{}iter}\PYG{p}{.}\PYG{n}{peek}\PYG{p}{(}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{            }\PYG{n+nb}{Some}\PYG{p}{(}\PYG{n}{b}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{n}{b}\PYG{p}{,}
+\PYG{+w}{            }\PYG{n+nb}{None}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{n}{GenericArray}\PYG{p}{::}\PYG{n}{from}\PYG{p}{(}\PYG{n}{iv}\PYG{p}{)}\PYG{p}{,}
+\PYG{+w}{        }\PYG{p}{\PYGZcb{}}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{n}{cipher}\PYG{p}{.}\PYG{n}{decrypt\PYGZus{}block}\PYG{p}{(}\PYG{n}{block}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{block}\PYG{p}{.}\PYG{n}{iter\PYGZus{}mut}\PYG{p}{(}\PYG{p}{)}\PYG{p}{.}\PYG{n}{zip}\PYG{p}{(}\PYG{n}{prev}\PYG{p}{)}\PYG{p}{.}\PYG{n}{for\PYGZus{}each}\PYG{p}{(}\PYG{o}{|}\PYG{p}{(}\PYG{n}{a}\PYG{p}{,}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{n}{b}\PYG{p}{)}\PYG{o}{|}\PYG{+w}{ }\PYG{o}{*}\PYG{n}{a}\PYG{+w}{ }\PYG{o}{\PYGZca{}}\PYG{o}{=}\PYG{+w}{ }\PYG{n}{b}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+
+\PYG{+w}{    }\PYG{n}{msg}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}
