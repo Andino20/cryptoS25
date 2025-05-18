@@ -1,0 +1,75 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath,amsthm, amssymb}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{minted}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{nicefrac}
+\usepackage{hyperref}
+
+% Minted customization to remove background
+\usemintedstyle{vs} % Visual Studio-like
+\setminted{
+    bgcolor=white, % ensures white background
+    frame=lines,
+    framesep=2mm,
+    baselinestretch=1.2,
+    fontsize=\footnotesize,
+    linenos
+}
+
+\theoremstyle{definition}
+\newtheorem{example}{Example}
+
+\newcommand{\bigO}{\mathcal{O}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{PS Einführung in die Kryptographie}
+\rhead{Andreas Schlager}
+\cfoot{\thepage}
+
+\title{Aufgabenblatt 08\\\large PS Einführung in die Kryptographie}
+\author{Andreas Schlager}
+\date{\today}
+
+\onehalfspacing
+
+% Theorem-Umgebung für Aufgaben
+\newtheorem{aufgabe}{Aufgabe}
+
+% ---- Makro für neue Aufgabe ----
+\newcommand{\newaufgabe}[1]{
+  \newpage
+  \begin{aufgabe}
+  #1
+  \end{aufgabe}
+  \addcontentsline{toc}{section}{Aufgabe \theaufgabe}
+}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+% Startnummer anpassen (z.B. erste Aufgabe hat Nummer 20, dann counter auf 19 setzen)
+\setcounter{aufgabe}{26}
+
+% ---- Aufgaben ----
+\input{aufgaben/a27.tex}
+\input{aufgaben/a28.tex}
+\input{aufgaben/a29.tex}
+\input{aufgaben/a30.tex}
+
+\end{document}

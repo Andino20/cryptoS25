@@ -1,0 +1,78 @@
+\newaufgabe{Zur Known-Plaintext Attacke gegen 2 Key EDE TripleDES (Slide 138f): 
+Erklären/beweisen
+sie die angegebene Angriffskomplexität / Laufzeit der Oorschot, Wiener Attacke und
+die Anzahl der im Mittel notwendigen Versuche für a. Hinweis: sehen sie sich die
+Originalarbeit dazu an.}
+\paragraph{Zeitkomplexität}
+Zur Berechnung der asymptotischen Zeitkomplexität des Angriffs, wird für jeden 
+Teilschritt die Komplexität angegeben.
+\begin{enumerate}
+    \item Gegeben eine Tabelle mit Plaintext- und Ciphertext Paaren
+          (Tabelle 1, sortiert nach Plaintexten).
+          \begin{enumerate}
+            \item Sortieren benötigt bei $p$ Paaren $\bigO (p\log p)$.
+          \end{enumerate}
+    \item Erraten/wählen Sie einen fixen ersten Zwischenwert $a = E_{K_1}(P)$.
+          \begin{enumerate}
+            \item Ein fixes $a$ wählen geht in $\bigO (1)$.
+          \end{enumerate}
+    \item Bestimmen sie durch die Berechnung von $P = D_{K_1} (a)$ den
+          Plaintext und suchen den dazugehörenden Ciphertext $C$ in Tabelle
+          1, dies für alle $K_1$.
+          \begin{enumerate}
+            \item Pro $K_1$:
+            \begin{enumerate}
+                \item Berechnung von $P = D_{K_1} (a)$ in $\bigO (1)$.
+                \item In der Tabelle suchen $\bigO (\log p)$.
+            \end{enumerate}
+            \item Insgesamt gibt es für $K \in \{0, 1\}^n$ $2^n$ Durchläufe. 
+          \end{enumerate}
+          Somit ist die Gesamtkomplexität für diesen Schritt $\bigO(2^n\log p)$.
+    \item Tabulieren Sie für alle $K_1$ (für das fixe $a$) den zweiten
+          Zwischenwert, $b = D_{K_1} (C)$ (Tabelle 2).\vspace*{1em}\\
+          Entspricht wieder einem gesamten Durchlauf der Schlüssel ($2^n$). Bei jedem wird
+          $b$ in $\bigO(1)$ berechnet. Die Komplexität beträgt daher $\bigO(2^n)$.
+    \item Suchen Sie in der Tabelle 2 für alle möglichen $K_2$ Elemente mit
+          passendem zweiten Zwischenwert $b = D_{K_2} (a)$.
+          \begin{enumerate}
+            \item Pro $K_2$:
+            \begin{enumerate}
+                \item Berechne $b = D_{K_2}(a)$ in $\bigO(1)$.
+                \item Prüfe $b$ in Tabelle 2 (angenommen Hashtabelle) in $\bigO(1)$.
+            \end{enumerate}
+            \item Insgesamt gibt es wieder $2^n$ $K_2$, also auch $2^n$ Durchläufe.
+          \end{enumerate}
+          Gesamtkomplexität ist $\bigO(2^n)$.
+    \item Bei Übereinstimmung ist ein mögliches Schlüsselpaar gefunden
+          (mit weiteren Plaintext / Ciphertextpaaren verifizieren). Ansonsten
+          wird ein neues $a$ gewählt.\vspace*{1em}\\
+          Verifikation durch $p$ bekannte Paare in $\bigO(p)$.
+\end{enumerate}
+Durch die Schritte 3, 4 \& 5 ergeben sich folgende Laufzeiten
+\[
+    \bigO(2^n\log p), \bigO(2^n), \bigO(2^n).
+\]
+Im schlechtesten Fall müssen alle Zwischenwert für $a\in\{0,1\}^m$ überprüft werden.
+\[
+    \bigO(2^n\cdot 2^m) = \bigO(2^{n + m})
+\]
+\paragraph{Wahrscheinlichkeit} Es existieren $2^m$ mögliche Werte für $a$. In 
+der Datenbank befinden sich $p$ Einträge. Unter der Annahme, dass jeder
+Zwischenwert der Klartextpaare gleichverteilt ist, ist die Wahrscheinlichkeit einen
+Treffer zu landen 
+\[
+    P(\text{Treffer})=\frac{p}{2^m}.
+\]
+Nimmt man dieses Wahrscheinlichkeit als die Wahrscheinlichkeit für ein Bernoulli-Experiment an,
+gibt uns die geometrische Verteilung den Erwartungswert für die Anzahl $N$ an unterschiedlichen
+Werten für $a$.
+\[
+    \mathbb{E}[N] = \frac{1}{P(\text{Treffer})} = \frac{2^m}{p}
+\]
+Im Schnitt müssen wir also nicht alle $2^m$ Werte für $a$ probieren (wie im worst-case),
+sondern nur $\mathbb{E}[N]$ viele. Die erwartete Laufzeitkomplexität ist
+\[
+    \bigO\left(2^n\cdot \frac{2^m}{p}\right) = \bigO\left(\frac{2^{n + m}}{p}\right) 
+\]
+\paragraph{Fazit}
+Je größer die Datenbank an Plaintext-Ciphertext-Paaren ist, desto schneller geht der Angriff.

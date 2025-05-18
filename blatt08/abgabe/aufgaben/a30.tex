@@ -1,0 +1,31 @@
+\newaufgabe{Beweisen Sie: Ist $n=p\cdot g$ mit $p,g\in \mathbb{P}$: $\phi(n) = (p - 1)(g - 1)$.}
+\begin{proof}
+    $\phi(n) = (p - 1)(g - 1)$.
+
+    $n$ ist eine zusammengesetzte Zahl, deren Primfaktorenzerlegung 
+    genau $p \cdot g$ ist. Somit sind alle Vielfachen der Primzahlen, die
+    nicht größer als $n$ sind, \textbf{nicht} teilerfremd zu $n$ (der gemeinsame Teiler
+    sind die entsprechenden Primzahlen). 
+    \begin{align*}
+        \vert 
+        \{
+            k\cdot p \mid 1 \leq k \leq g 
+        \} \vert = \vert \{
+            p, 2p, 3p, \dots, g\cdot p
+        \}\vert &= g\\
+        \vert
+        \{
+            k\cdot g \mid 1 \leq k \leq p 
+        \} \vert = \vert \{
+            g, 2g, 3g, \dots, p\cdot g
+        \}\vert &= p
+    \end{align*}
+    Ausgehend von alle in Frage kommenden Zahlen $p\cdot g$, ziehen wir
+    jeweils obigen Anzahl ab und achten darauf, die Schnittmenge ($n$) nur einmal
+    abzuziehen.
+    \begin{align*}
+            \phi(n) &= p\cdot g - 1 - p + 1 - g + 1\\
+            &= p\cdot g - p - g + 1\\
+            &= (p - 1) (g - 1)
+    \end{align*}
+\end{proof}
