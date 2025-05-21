@@ -10,7 +10,7 @@ Teilschritt die Komplexität angegeben.
     \item Gegeben eine Tabelle mit Plaintext- und Ciphertext Paaren
           (Tabelle 1, sortiert nach Plaintexten).
           \begin{enumerate}
-            \item Sortieren benötigt bei $p$ Paaren $\bigO (p\log p)$.
+            \item Hashen und Sortieren benötigt bei $p$ Paaren $\bigO (p\log p)$.
           \end{enumerate}
     \item Erraten/wählen Sie einen fixen ersten Zwischenwert $a = E_{K_1}(P)$.
           \begin{enumerate}
@@ -23,11 +23,11 @@ Teilschritt die Komplexität angegeben.
             \item Pro $K_1$:
             \begin{enumerate}
                 \item Berechnung von $P = D_{K_1} (a)$ in $\bigO (1)$.
-                \item In der Tabelle suchen $\bigO (\log p)$.
+                \item In der Hashtabelle suchen $\bigO (1)$.
             \end{enumerate}
             \item Insgesamt gibt es für $K \in \{0, 1\}^n$ $2^n$ Durchläufe. 
           \end{enumerate}
-          Somit ist die Gesamtkomplexität für diesen Schritt $\bigO(2^n\log p)$.
+          Somit ist die Gesamtkomplexität für diesen Schritt $\bigO(2^n)$.
     \item Tabulieren Sie für alle $K_1$ (für das fixe $a$) den zweiten
           Zwischenwert, $b = D_{K_1} (C)$ (Tabelle 2).\vspace*{1em}\\
           Entspricht wieder einem gesamten Durchlauf der Schlüssel ($2^n$). Bei jedem wird
@@ -48,9 +48,9 @@ Teilschritt die Komplexität angegeben.
           wird ein neues $a$ gewählt.\vspace*{1em}\\
           Verifikation durch $p$ bekannte Paare in $\bigO(p)$.
 \end{enumerate}
-Durch die Schritte 3, 4 \& 5 ergeben sich folgende Laufzeiten
+Durch die Schritte 3, 4 \& 5 haben alle einzeln die Laufzeitkomplexität
 \[
-    \bigO(2^n\log p), \bigO(2^n), \bigO(2^n).
+    \bigO(2^n).
 \]
 Im schlechtesten Fall müssen alle Zwischenwert für $a\in\{0,1\}^m$ überprüft werden.
 \[
