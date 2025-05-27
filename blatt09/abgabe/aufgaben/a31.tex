@@ -3,5 +3,111 @@
 dem auf Slide 150 der VO) und implementieren sie Experimente, in denen sie, für
 wachsende Modulgrösse, den Zeitbedarf beider Kriterien bestimmen. Hinweis: z.B.
 in Mathematica sind diverse hilfreiche zahlentheoretische Funktionen - wie z.B. 
-Faktorisierung - implementiert.
+Faktorisierung - implementiert.}
+Eine Primitivwurzel $q$ modulo $p$ ist eine Zahl im Restklassenring von $p$,
+die durch modulares potenzieren alle Zahlen im Restklassenring erzeugt.
+In der Vorlesung wurde ein einfaches Kriterium für die Bestimmung einer
+Primitivwurzel vorgestellt. Sei $q < p$ und
+\[
+    \forall b\quad 1 \leq b \leq p - 1\quad \exists a: q^a \equiv b\mod p,
+\]
+so ist $q$ eine Primitivwurzel von $p$. Also kann durch einfaches Ausprobieren 
+aller Exponenten modulo $p$ festgestellt werden, ob $q$ eine Primitivwurzel
+ist. 
+\paragraph{Brute-Force Algorithmus}
+Es wird angenommen, dass die gegebene Zahl $p$ wirklich eine Primzahl ist. Für die Überprüfung könnte
+ein probabilistischen Primzahlentest, wie etwa der Miller-Rabin-Test, verwendet werden.
+Für jede Zahl $q\in [2; p - 1]$ und $i\in[1; p-1]$ wird die modulare Exponentiation durchgeführt
+und das Ergebnis in einem Set gespeichert. Ist das Ergebnis bereits vorhanden, bzw. kommt doppelt vor,
+so kann $q$ keine Primitivwurzel sein, da jeder Exponent zu einer einzigartigen Zahl führen muss.
+\begin{minted}{rust}
+pub fn primitive_root_brute_force(p: u128) -> Option<u128> {
+    let phi = p - 1;
+    for q in 2..phi {
+        let mut unique_numbers = HashSet::new();
+        let unique_numbers = (1..=phi)
+            .take_while(|x| unique_numbers.insert(mod_exp(q, *x, p)))
+            .count();
+
+        if unique_numbers == phi as usize {
+            return Some(q);
+        }
+    }
+    None
 }
+\end{minted}
+\paragraph{Ordnungskriterium}
+Ein weiteres Kriterium für eine Primitivwurzel verwendet die multiplikative Ordnung einer
+Zahl und die eulersche $\varphi$-Funktion.
+\begin{korollar}[Primitivwurzel]
+    Sei $q < p$ und $p\in\mathbb{P}$. $q$ ist genau dann eine Primitivwurzel modulo $p$, wenn
+    \[
+        \operatorname{ord}_p(q) = \varphi(p) = p - 1. 
+    \]
+\end{korollar}
+Die Ordnung $\operatorname{ord_p(q)}$ ist der kleinste Exponent $i\in[1;p-1]$ für
+den
+\[
+    q^i \equiv 1 \mod p
+\]
+Der Satz von Lagrange besagt, dass die Ordnung eines Elements einer endlichen zyklischen Gruppe die Ordnung
+der Gruppe selbst, hier $\varphi(p)$, teilt. Man nutzt nun diese Eigenschaft aus und probiert anstelle aller Exponenten
+nur die Teiler von $\varphi(p)$ (alle möglichen Ordnungen der Gruppe). Ist der kleinste Exponent $i$ für den $q^i\equiv 1\mod p$ gilt,
+gleich $p-1$, so ist $q$ eine Primitivwurzel.
+
+Diese Vorgehen kann noch weiter verbessert werden, indem nur die Primfaktoren von $\varphi(p)$ berechnet
+werden und 
+\begin{equation} \label{eq:primefactorcriterium}
+    q^{\nicefrac{p-1}{g}} \not\equiv 1 \mod p\qquad\forall \text{ Primfaktoren } g \mid p - 1    
+\end{equation}
+überprüft wird\footnote{Otto Forster, \href{https://www.mathematik.uni-muenchen.de/~forster/v/zth/inzth_09.pdf}{Einführung in die Zahlentheorie}, [22.05.2025], Korollar 9.5}.
+\paragraph{Lagrange-Primfaktoren-Algorithmus}
+Zuerst werden die Primfaktoren von $p-1$ bestimmt. Anschließend wird, wie beim Brute-Force Algorithmus, über alle
+$q\in[2;p-1]$ iteriert und das Kriterium aus \ref{eq:primefactorcriterium} überprüft. Falls keine Berechnung 1 ergibt,
+liefert die Methode als Ergebnis das aktuelle $q$. In den Zeilen 5-8 ist zu sehen, wie die Primfaktoren auf die
+modulare Exponentiation gemapped und anschließend mittels \texttt{all} auf die Ungleichheit zu 1 überprüft werden.
+\begin{minted}{rust}
+pub fn primitive_root_lagrange(p: u128) -> Option<u128> {
+    let phi = p - 1;
+    let prime_factors = Factorization::run(phi).prime_factor_repr();
+    for q in 2..phi {
+        let is_primitive_root = prime_factors
+            .iter()
+            .map(|(factor, _)| mod_exp(q, phi / factor, p))
+            .all(|x| x != 1);
+
+        if is_primitive_root {
+            return Some(q);
+        }
+    }
+    None
+}
+\end{minted}
+\newpage
+\paragraph{Benchmarks} Zum Vergleich der zwei Algorithmen wurde die \texttt{criterion} Benchmarking-Bibliothek verwendet.
+Jede Funktion wurde mit einer größer werdenden Folge von Primzahlen aufgerufen und der Zeitbedarf gemessen. Die verwendete
+Primzahlen Liste ist überschaubar, da die Laufzeiten, vorallem von der Brute-Force Variante, schnell gestiegen sind.
+\[
+    \text{primes} = \{223, 1033, 2239, 5179, 7919, 22447, 73907, 111799, 153913\}
+\]
+\begin{figure}[h]
+    \includesvg[inkscapelatex=false, width=\textwidth]{img/time_comparison.svg}
+    \caption{Vergleich der Laufzeiten bei ansteigenden Primzahlen}
+    \label{fig:runtime_comparison}
+\end{figure}
+Wie in Abb. \ref{fig:runtime_comparison} zu sehen ist, steigt die Laufzeit der Brute-Force Variante besonders schnell
+im Vergleich zum Lagrange-Primfaktoren-Algorithmus (grüne Linie, kaum zu sehen). Der verbesserte Algorithmus
+bewegt sich durchwegs im $\mu$s Bereich, wobei der langsame schnell Millisekunden bzw. Sekunden benötigt.
+\begin{figure}
+    \includesvg[inkscapelatex=false, width=\textwidth]{img/lagrange_violin.svg}
+    \caption{Violinen-Plot der Laufzeit der Lagrange-Primfaktoren Variante}
+    \label{fig:violin_lagrange}
+\end{figure}
+\begin{figure}
+    \includesvg[inkscapelatex=false, width=\textwidth]{img/brute_force_violin.svg}
+    \caption{Violinen-Plot der Laufzeit der Brute-Force Variante}
+    \label{fig:violin_brute_force}
+\end{figure}
+In Abb. \ref{fig:violin_lagrange} ist nochmal deutlich zu sehen, 
+dass die Laufzeit bei der Lagrange-Variante nur langsam ansteigt.
+In Abb. \ref{fig:violin_brute_force} ist hingegen ein deutlicher Anstieg der Laufzeit zu erkennen.

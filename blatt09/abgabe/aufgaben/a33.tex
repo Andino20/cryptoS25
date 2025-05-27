@@ -1,2 +1,18 @@
 \newaufgabe{Warum ist RSA in der bisherigen Beschreibung (sog. Textbook RSA) 
 nicht IND-CPA? Wie wird mit RSA typischerweise diese Sicherheitsstufe erreicht?}
+Reguläres (Textbook RSA) ist nicht IND-CPA sicher, weil es deterministisch ist.
+Das heißt, der gleiche Plaintext wird immer gleich verschlüsselt. Falls der Angreifer
+in der Lage ist, zwei Ciphertexte mit einer Wahrscheinlichkeit $> \nicefrac{1}{2}$ zu unterscheiden,
+ist die Verschlüsselung nicht IND-CPA sicher. 
+
+Angenommen der Angreifer ist in der Lage den Klartextraum einzuschränken, weil er 
+etwa weiß, dass nur 'ja' oder 'nein' als Nachrichten verschickt werden. Ausgehend von dem Orakel-Modell,
+könnte er dem Orakel beide Texte zum Verschlüsseln geben. Das Orakel wählt zufällig
+einen der Texte aus, verschlüsselt ihn mit dem öffentlichen RSA-Schlüssel und schickt ihn
+an den Angreifer zurück. Der Angreifer kann nun selbst beide Nachrichten mit dem bekannten
+öffentlichen Schlüssel verschlüssen und einen einfachen Vergleich der Ciphertexte durchführen,
+um den ausgewählten Klartext herauszufinden.
+
+Um RSA IND-CPA sicher zu machen, muss der Plaintext mit zufälligen Bits ausgepolstert werden. Dadurch
+wird sich der Ciphertext, den der Angreifer generiert, vom Ciphertext des Orakels unterscheiden.
+In der Praxis wird das z.B durch OAEP (Optimal Asymmetric Encryption Padding) realisiert.

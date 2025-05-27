@@ -1,0 +1,12 @@
+[package]
+name = "primitive-root"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+criterion = "0.6.0"
+prime_factorization = "1.0.5"
+
+[[bench]]
+name = "primitive_root_benchmark"
+harness = false

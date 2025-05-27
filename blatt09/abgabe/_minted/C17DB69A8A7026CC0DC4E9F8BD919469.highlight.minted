@@ -1,0 +1,16 @@
+\begin{MintedVerbatim}[commandchars=\\\{\}]
+\PYG{k}{pub}\PYG{+w}{ }\PYG{k}{fn}\PYG{+w}{ }\PYG{n+nf}{primitive\PYGZus{}root\PYGZus{}brute\PYGZus{}force}\PYG{p}{(}\PYG{n}{p}\PYG{p}{:}\PYG{+w}{ }\PYG{k+kt}{u128}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{\PYGZhy{}\PYGZgt{}}\PYG{+w}{ }\PYG{n+nb}{Option}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{u128}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{phi}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{p}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{for}\PYG{+w}{ }\PYG{n}{q}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{o}{..}\PYG{n}{phi}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{        }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{k}{mut}\PYG{+w}{ }\PYG{n}{unique\PYGZus{}numbers}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{n}{HashSet}\PYG{p}{::}\PYG{n}{new}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k+kd}{let}\PYG{+w}{ }\PYG{n}{unique\PYGZus{}numbers}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{..=}\PYG{n}{phi}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n}{take\PYGZus{}while}\PYG{p}{(}\PYG{o}{|}\PYG{n}{x}\PYG{o}{|}\PYG{+w}{ }\PYG{n}{unique\PYGZus{}numbers}\PYG{p}{.}\PYG{n}{insert}\PYG{p}{(}\PYG{n}{mod\PYGZus{}exp}\PYG{p}{(}\PYG{n}{q}\PYG{p}{,}\PYG{+w}{ }\PYG{o}{*}\PYG{n}{x}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{p}\PYG{p}{)}\PYG{p}{)}\PYG{p}{)}
+\PYG{+w}{            }\PYG{p}{.}\PYG{n}{count}\PYG{p}{(}\PYG{p}{)}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{unique\PYGZus{}numbers}\PYG{+w}{ }\PYG{o}{=}\PYG{o}{=}\PYG{+w}{ }\PYG{n}{phi}\PYG{+w}{ }\PYG{k}{as}\PYG{+w}{ }\PYG{k+kt}{usize}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{            }\PYG{k}{return}\PYG{+w}{ }\PYG{n+nb}{Some}\PYG{p}{(}\PYG{n}{q}\PYG{p}{)}\PYG{p}{;}
+\PYG{+w}{        }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{    }\PYG{p}{\PYGZcb{}}
+\PYG{+w}{    }\PYG{n+nb}{None}
+\PYG{p}{\PYGZcb{}}
+\end{MintedVerbatim}
